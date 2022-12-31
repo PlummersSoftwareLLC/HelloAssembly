@@ -8,3 +8,5 @@ The goal of this project is to make the smallest possible application, without c
   - Paints the background and some text centered in the middle, equal to or larger than "Dave's Tiny App"
   
 Please keep it readable and explain what you're doing in the comments!  And the smaller, the better!  
+
+Current size as of 12/30/2022 is 1536 bytes
