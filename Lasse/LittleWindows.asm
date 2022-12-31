@@ -40,9 +40,9 @@
 ; We need to dynamically load kernel32 (already loaded), user32, and gdi32
 ; We then need to obtain the address for the following functions: 
 ;
-; LoadLibraryA          ebp+10                  (kernel32.dll)
-; ExitProcess 	        ebp+14			(kernel32.dll)
-; GetModuleHandle       ebp+18			(kernel32.dll)
+; LoadLibraryA      ebp+10          (kernel32.dll)
+; ExitProcess 	    ebp+14			(kernel32.dll)
+; GetModuleHandle   ebp+18			(kernel32.dll)
 ; GetCommandLineA 	ebp+1c			(kernel32.dll)
 ; GetStartupInfoA 	ebp+20			(kernel32.dll)
 ; LoadIconA 		ebp+24			(user32.dll)
@@ -54,7 +54,7 @@
 ; TranslateMessage 	ebp+3c			(user32.dll)
 ; DispatchMessageA 	ebp+40			(user32.dll)
 ; PostQuitMessage 	ebp+44			(user32.dll)
-; BeginPaint	        ebp+48			(user32.dll) 
+; BeginPaint	    ebp+48			(user32.dll) 
 ; GetClientRect 	ebp+4c			(user32.dll)
 ; DrawTextA 		ebp+50			(user32.dll)
 ; EndPaint      	ebp+54			(user32.dll)
@@ -94,12 +94,13 @@ pEbp	        DWORD ?			        ;  pEbp is a place on the stack that we save a lo
 ;-------------------------------------------------------------------------------------------------------------------
 ; Setting up our own stack frame
 start proc
-	mov ebp, esp
+        mov ebp, esp
         add esp, 0ffffff10h                     ; 0xf0 (240 bytes) is more than enough space on the stack for our variables
         mov pEbp, ebp
 start endp
 
 ; find the base address of kernel32 using the "PEB method": https://www.offensive-security.com/awe/AWEPAPERS/Skypher.pdf
+
 find_kernel32:
         xor ecx, ecx                            ; ecx = 0
         ASSUME FS:NOTHING                       ; ml.exe doesn't like that we use the fs register, so we need to tell it to stop caring.         
@@ -273,18 +274,18 @@ MainEntry proc
         push eax
         call dword ptr[ebx+20h]                 ; call GetStartupInfoA
         test sui.dwFlags, 1                     ; Find out if wShowWindow should be used
-	jz @1
-	push sui.wShowWindow	        			; If the show window flag bit was nonzero, we use wShowWindow
-	jmp @2
+    jz @1
+        push sui.wShowWindow	                ; If the show window flag bit was nonzero, we use wShowWindow
+    jmp @2
 @1:
-	push 0ah                     	        	; Use the default 
+    push 0ah                     	        	; Use the default 
 @2:	
         push [ebx+64h]                          ; CommandlineStr
         xor eax, eax                            ; null
         push eax
         push [ebx+60h]                          ; hInstance
 
-	call	WinMain
+    call	WinMain
 
         ;Terminate process
         xor eax, eax
@@ -299,14 +300,14 @@ WinMain proc hInst:DWORD, hPrevInst:DWORD, CmdLine:DWORD, CmdShow:DWORD
         mov ebx, [pEbp]                         ; ebx = pEbp, our address space for variables
 
         ; LoadIconA
-	push	7F00h				; Use the default application icon  IDI_APPLICATION = 7F00h
-	xor eax, eax
+        push	7F00h				            ; Use the default application icon  IDI_APPLICATION = 7F00h
+        xor eax, eax
         push	eax	                       		; null
-	call 	dword ptr[ebx+24h]              	; Call LoadIconA
+        call 	dword ptr[ebx+24h]              	; Call LoadIconA
         mov [ebx+68h], eax                      ; Save handle
         ; LoadCursorA
         push 7F00h                              ; Use the default cursor 
-	xor eax, eax
+        xor eax, eax
         push	eax	                        	; null
         call dword ptr[ebx+28h]                 ; Call LoadCursorA
         mov [ebx+28h], eax                      ; Save handle
@@ -320,6 +321,7 @@ WinMain proc hInst:DWORD, hPrevInst:DWORD, CmdLine:DWORD, CmdShow:DWORD
         mov [ebx+6ch], esp                      ; Save pointer to string
 
         ; Dave's Tiny App pushed in reverse order in hex
+
         xor eax, eax
         push eax                                
         push 0707041h
@@ -329,6 +331,7 @@ WinMain proc hInst:DWORD, hPrevInst:DWORD, CmdLine:DWORD, CmdShow:DWORD
         mov [ebx+70h], esp                      ; Save pointer to string
 
         ; Setting up structure and calling RegisterClassEx
+
         push [ebx+68h]                          ; hIconSm
         push [ebx+6ch]                          ; lpszClassName
         xor eax, eax
@@ -350,6 +353,7 @@ WinMain proc hInst:DWORD, hPrevInst:DWORD, CmdLine:DWORD, CmdShow:DWORD
         call dword ptr[ebx+2ch]                 ; Register the window class
 
         ; Setting up stack and calling CreateWindowExA
+
         xor eax, eax                            ; lpParam null
         push eax
         push [ebx+60h]                          ; hinstance
@@ -392,7 +396,7 @@ MessageLoop:
         push eax
         call dword ptr[ebx+40h]                 ; call dispatchMessage
 
-	jmp	MessageLoop
+    jmp	MessageLoop
 
 DoneMessages:
 
@@ -400,16 +404,16 @@ DoneMessages:
 
 WinMainRet:
 
-	ret
+    ret
 
 WinMain endp
 
 
 WndProc proc hWnd:DWORD, uMsg:DWORD, wParam:DWORD, lParam:DWORD
 
-	LOCAL 	ps:PAINTSTRUCT		        		; Local stack variables
-	LOCAL	rect:RECT
-	LOCAL	hdc:HDC
+    LOCAL 	ps:PAINTSTRUCT		        		; Local stack variables
+    LOCAL	rect:RECT
+    LOCAL	hdc:HDC
         
         mov ebx, pEbp
         cmp uMsg, 0002h                         ; cmp uMSG with WM_DESTROY = 0x0002
