@@ -3,6 +3,7 @@ The smallest possible complete Windows application
 
 Current code is in the folder "Lasse"
 Original code in the folder "TinyOriginal"
+QRCode is dead code, was the exe embedded into a QRCode, kept just for posterity
 
 The goal of this project is to make the smallest possible application, without compression, that has the following features:
   - Runs a Windows message loop
