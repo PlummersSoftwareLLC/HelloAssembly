@@ -62,9 +62,8 @@
 ; SetBkMode 		ebp+5c			(gdi32.dll)
 
 ; Global variables and structures
-; hInstance = ebp+60 
-; CommandLine = ebp+64
-; StartupInfoA = ebp+68
+; hInstance 		ebp+60 
+; CommandLine 		ebp+64
 
 ; How to build
 ; ml /coff LittleWindows.asm
@@ -163,27 +162,25 @@ find_function_compare:
 
 find_function_finished:
         popad                                   ; restore all the registers again
-        ret                                     ; return
+        mov [ebp+ecx], eax                      ;
+        sub ecx, 0fffffffch                     ; increase ecx by 4 (size of dword), and avoid nullbytes
+        ret    
 
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack, 
 ; example: https://medium.com/asecuritysite-when-bob-met-alice/ror13-and-its-linkage-to-api-calls-within-modules-c2191b35161d
 
 resolve_symbols_kernel32:
+        mov ecx, 10h                            ; ECX will be used as an index to where on ebp the function address will be stored
         push 0ec0e4e8eh                         ; LoadLibararyA hash
         call find_function                      
-        mov [ebp+10h], eax                      ; Save address of LoadLibraryA
         push 073e2d87eh                         ; ExitProcess hash
         call find_function
-        mov [ebp+14h], eax                      ; Save ExitProcess  
         push 0d3324904h                         ; GetModuleHandleA hash
         call find_function
-        mov [ebp+18h], eax                      ; Save address of GetModuleHandleA
         push 036ef7370h                         ; GetCommandLineA hash
         call find_function
-        mov [ebp+1ch], eax                      ; Save address of GetCommandLineA
         push 0867ae3d7h                         ; GetStartupInfoA hash
         call find_function
-        mov [ebp+20h], eax                      ; Save address of GetStartupInfoA
 
 load_user32:                                    ; Push the string of user32.dll onto the string in reverse order
         xor eax, eax                            ; \0
@@ -198,46 +195,32 @@ resolve_symbols_user32:
         mov ebx, eax                            ; Load the base address of user32.dll into ebx
         push 016f8ba14h                         ; LoadIconA hash
         call find_function
-        mov [ebp+24h], eax                      ; Save address of LoadIconA
         push 0cba6c0cfh                         ; LoadCursorA hash
         call find_function
-        mov [ebp+28h], eax                      ; Save address of LoadCursorA
         push 051e20ccah                         ; RegisterClassExA hash
         call find_function
-        mov [ebp+2ch], eax                      ; Save address of RegisterClassExA
         push 084454941h                         ; CreateWindowExA hash
         call find_function
-        mov [ebp+30h], eax                      ; Save address of CreateWindowExA
         push 0c2bfd83fh                         ; UpdateWindow hash
         call find_function
-        mov [ebp+34h], eax                      ; Save address of UpdateWindow
         push 07ac67bedh                         ; GetMessageA hash
         call find_function
-        mov [ebp+38h], eax                      ; Save address of GetMessageA
         push 08fde2c7eh                         ; TranslateMessage hash
         call find_function
-        mov [ebp+3ch], eax                      ; Save address of TranslateMessage
         push 0690a1701h                         ; DispatchMessageA hash
         call find_function
-        mov [ebp+40h], eax                      ; Save address of DispatchMessageA
         push 04be0469dh                         ; PostQuitMessage hash
         call find_function
-        mov [ebp+44h], eax                      ; Save address of PostQuitMessage
         push 02c1b37cch                         ; BeginPaint hash
         call find_function
-        mov [ebp+48h], eax                      ; Save address of BeginPaint
         push 0157f8399h                         ; GetClientRect hash
         call find_function
-        mov [ebp+4ch], eax                      ; Save address of GetClientRect
         push 093296cbdh                         ; DrawTextA hash
         call find_function
-        mov [ebp+50h], eax                      ; Save address of DrawTextA
         push 0c72d2386h                         ; EndPaint hash
         call find_function
-        mov [ebp+54h], eax                      ; Save address of EndPaint
         push 0b9a87723h                         ; DefWindowProcA hash
         call find_function
-        mov [ebp+58h], eax                      ; Save address of DefWindowProcA
 
 load_gdi32:                                     ; push gdi32.dll onto the stack in reverse order
         xor eax, eax                            ; set eax to zero (\0 byte)
@@ -252,7 +235,6 @@ resolve_symbols_gdi32:
         mov ebx, eax                            ; ebx = base address of gdi32.dll
         push 0f1f6d8e6h                         ; SetBKMode hash
         call find_function
-        mov [ebp+5ch], eax                      ; Save address of SetBKmode
 
 MainEntry proc
         LOCAL	sui:STARTUPINFOA
@@ -274,10 +256,10 @@ MainEntry proc
         call dword ptr[ebx+20h]                 ; call GetStartupInfoA
         test sui.dwFlags, 1                     ; Find out if wShowWindow should be used
 	jz @1
-	push sui.wShowWindow	        			; If the show window flag bit was nonzero, we use wShowWindow
+	push sui.wShowWindow	        	; If the show window flag bit was nonzero, we use wShowWindow
 	jmp @2
 @1:
-	push 0ah                     	        	; Use the default 
+	push 0ah                     	        ; Use the default 
 @2:	
         push [ebx+64h]                          ; CommandlineStr
         xor eax, eax                            ; null
@@ -301,13 +283,13 @@ WinMain proc hInst:DWORD, hPrevInst:DWORD, CmdLine:DWORD, CmdShow:DWORD
         ; LoadIconA
 	push	7F00h				; Use the default application icon  IDI_APPLICATION = 7F00h
 	xor eax, eax
-        push	eax	                       		; null
-	call 	dword ptr[ebx+24h]              	; Call LoadIconA
+        push	eax	                       	; null
+	call 	dword ptr[ebx+24h]              ; Call LoadIconA
         mov [ebx+68h], eax                      ; Save handle
         ; LoadCursorA
         push 7F00h                              ; Use the default cursor 
 	xor eax, eax
-        push	eax	                        	; null
+        push	eax	                        ; null
         call dword ptr[ebx+28h]                 ; Call LoadCursorA
         mov [ebx+28h], eax                      ; Save handle
 
@@ -407,7 +389,7 @@ WinMain endp
 
 WndProc proc hWnd:DWORD, uMsg:DWORD, wParam:DWORD, lParam:DWORD
 
-	LOCAL 	ps:PAINTSTRUCT		        		; Local stack variables
+	LOCAL 	ps:PAINTSTRUCT		        ; Local stack variables
 	LOCAL	rect:RECT
 	LOCAL	hdc:HDC
         
@@ -468,4 +450,4 @@ NotWMPaint:
 
 WndProc endp
 
-END start				        				; Specify entry point, else _WinMainCRTStartup is assumed
+END start				        ; Specify entry point, else _WinMainCRTStartup is assumed
