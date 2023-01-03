@@ -258,12 +258,12 @@ MainEntry:
         lea eax, (STARTUPINFOA ptr [esp]).wShowWindow
         mov ecx, 1
         test eax, ecx                           ; Find out if wShowWindow should be used
-	jz @1
+        jz @1
         lea eax, (STARTUPINFOA ptr [esp]).dwFlags
-	push ax	                                ; If the show window flag bit was nonzero, we use wShowWindow
-	jmp @2
+        push ax	                                ; If the show window flag bit was nonzero, we use wShowWindow
+        jmp @2
 @1:
-	push 0ah                                ; Use the default
+        push 0ah                                ; Use the default
 @2:
         sub esp,sp_inv_STARTUPINFOA             ; Clean up stack
         push [ebp + lpszCommandLine]
@@ -427,4 +427,4 @@ NotWMPaint:
         leave
         ret 10h                                 ; this cleans up our 4 arguments, but causes null bytes. Should be fixed
 
-END start				        ; Specify entry point, else _WinMainCRTStartup is assumed
+END start                                       ; Specify entry point, else _WinMainCRTStartup is assumed
