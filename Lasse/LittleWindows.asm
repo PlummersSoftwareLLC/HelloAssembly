@@ -32,6 +32,9 @@
 ; //              Jan-02-2023   Lasse Hauballe Jensen aka. Fenrik
 ; //                              Further optimization (No includes or variables needed. Only .code section left)
 ; //
+; //              Jan-03-2023   rbergen
+; //                              Added tailor-made include and other readability improvements, shaved 16 more bytes off the exe
+; //
 ; // Note: Please avoid assembler macros such as if-then or invoke so
 ; //       that the code remains fully transparent!
 ; //
