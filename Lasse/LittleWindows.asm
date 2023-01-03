@@ -64,6 +64,21 @@ option casemap:none                             ; Preserve the case of system id
 ;-------------------------------------------------------------------------------------------------------------------
 .CODE                                           ; Here is where the program itself lives
 ;-------------------------------------------------------------------------------------------------------------------
+
+; Global variables - live above main stack frame pointer, offsets defined in LittleWindows.inc
+; ----------------
+; - hCursor
+; - hInstance
+; - lpszCommandLine
+; - hIcon
+; - lpszClassName
+; - lpszTitle
+; - hWnd
+; - lpAddressOfNames
+; 
+; Function pointers that are found for WinAPI functions are also stored above the main stack frame pointer. Function 
+; hash values (hash_*) and pointer offsets (fn_*) are defined in LittleWindows.inc.
+
 ; Setting up our own stack frame
 start proc
         mov ebp, esp
@@ -244,6 +259,11 @@ resolve_symbols_gdi32:
         push hash_SetBkMode
         call find_function
 
+;-------------------------------------------------------------------------------------------------------------------
+;
+; MainEntry
+;
+
 MainEntry:
         ; GetModuleHandleA
         push 0                                  ; Push null to the stack
@@ -272,6 +292,11 @@ MainEntry:
         push [ebp + lpszCommandLine]
         push 0                                  ; null
         push [ebp + hInstance]
+
+;-------------------------------------------------------------------------------------------------------------------
+;
+; WinMain
+;
 
 WinMain:
         ; LoadIconA
@@ -369,6 +394,24 @@ WinMainRet:
         ;Terminate process
         push 0                                  ; Exit Code
         call dword ptr[ebp + fn_ExitProcess]
+
+;-------------------------------------------------------------------------------------------------------------------
+;
+; WndProc
+;
+; Local variables - live below WndProc stack frame pointer, offsets defined in LittleWindows.inc
+; ---------------
+; - lpPaint
+; - lpRect
+; - hdc
+;
+; Parameters - live just above WndProc stack frame pointer, offsets defined in LittleWindows.inc
+; ----------
+; - WP_hWnd
+; - WP_uMsg
+; - WP_wParam
+; - WP_lParam
+;
 
 WndProc:
         call egghunter                          ; ebp is incorrect at this point. We call our egghunter function to reposition it, and place it into ebx
