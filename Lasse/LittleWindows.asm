@@ -153,7 +153,7 @@ find_egg:
         jne find_egg                            ; loop if not found
 matched:
         mov ebx, edi                            ; put the place we found in ebx...
-        sub ebx, sp_egg+4                       ; ...and adjust it
+        sub ebx, sp_egg + 4                     ; ...and adjust it
         ret
 
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
@@ -255,11 +255,11 @@ MainEntry:
         add esp,sp_inv_STARTUPINFOA             ; Setting up stack for STARTUPINFOA structure
         push esp                                ; Pointer to struct
         call dword ptr[ebp + fn_GetStartupInfoA]
-        lea eax, (STARTUPINFOA ptr [esp]).wShowWindow
+        lea eax, (STARTUPINFOA ptr[esp]).wShowWindow
         mov ecx, 1
         test eax, ecx                           ; Find out if wShowWindow should be used
         jz @1
-        lea eax, (STARTUPINFOA ptr [esp]).dwFlags
+        lea eax, (STARTUPINFOA ptr[esp]).dwFlags
         push ax	                                ; If the show window flag bit was nonzero, we use wShowWindow
         jmp @2
 @1:
@@ -301,13 +301,13 @@ WinMain:
         push [ebp + lpszClassName]
         xor eax, eax                            ; set to 0 - we'll reuse
         push 0                                  ; lpszMenuName = null
-        push COLOR_BTNSHADOW+1                  ; hbrBackground - Default brush colors are color plus one
+        push COLOR_BTNSHADOW + 1                ; hbrBackground - Default brush colors are color plus one
         push [ebp + hCursor]
         push [ebp + hIcon]
         push [ebp + hInstance]
         push eax                                ; cbWndExtra = 0
         push eax                                ; cbClsExtra = 0
-        push OFFSET WndProc                     ; lpfnWndProc
+        push OFFSET WndProc
         push CS_HREDRAW OR CS_VREDRAW           ; style
         push SIZEOF WNDCLASSEXA                 ; cbSize
         lea eax, [esp]
@@ -359,7 +359,7 @@ MessageLoop:
         jmp MessageLoop
 
 DoneMessages:
-        lea eax, (MSG ptr [ebp - sp_MSG]).wParam
+        lea eax, (MSG ptr[ebp - sp_MSG]).wParam
 
 ; WinMainRet usually returns to MainEntry, where ExitProcess is called. Atm. we have lost our return address, so exit is just called from here.
 WinMainRet:
