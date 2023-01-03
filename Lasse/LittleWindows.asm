@@ -1,37 +1,37 @@
 ; //+--------------------------------------------------------------------------
 ; //
-; // File:        LittleWindows.asm  
+; // File:        LittleWindows.asm
 ; //
-; // HelloWindows - (c) 2020 Plummer's Software LLC.  All Rights Reserved.  
+; // HelloWindows - (c) 2020 Plummer's Software LLC.  All Rights Reserved.
 ; //
 ; // This file is part of the Dave's Garage episode series.
 ; //
 ; //    This is an attempt to make a functional Windows app in as few bytes as
-; //    possible.  
+; //    possible.
 ; //
 ; //    HelloWindows is free software: you can redistribute it and/or modify
 ; //    it under the terms of the GNU General Public License as published by
 ; //    the Free Software Foundation, either version 3 of the License, or
 ; //    (at your option) any later version.
-; //   
+; //
 ; //    HelloWindows is distributed in the hope that it will be useful,
 ; //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ; //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ; //    GNU General Public License for more details.
-; //   
+; //
 ; //    You should have received a copy of the GNU General Public License
 ; //    along with Nightdriver.  It is normally found in copying.txt
 ; //    If not, see <https://www.gnu.org/licenses/>.
 ; //
-; // History:     Mar-22-2021   Davepl      
+; // History:     Mar-22-2021   Davepl
 ; //                              Created for HelloAssembly Episode
-; // 
-; //              Dec-30-2022   Lasse Hauballe Jensen aka. Fenrik 
+; //
+; //              Dec-30-2022   Lasse Hauballe Jensen aka. Fenrik
 ; //                              Import table optimization
 ; //
 ; //              Jan-02-2023   Lasse Hauballe Jensen aka. Fenrik
-; //                              Further optimization (No includes or variables needed. Only .code section left)  
-; //                                
+; //                              Further optimization (No includes or variables needed. Only .code section left)
+; //
 ; // Note: Please avoid assembler macros such as if-then or invoke so
 ; //       that the code remains fully transparent!
 ; //
@@ -96,9 +96,9 @@ start endp
 ; find the base address of kernel32 using the "PEB method": https://www.offensive-security.com/awe/AWEPAPERS/Skypher.pdf
 find_kernel32:
         xor ecx, ecx                            ; ecx = 0
-        ASSUME FS:NOTHING                       ; ml.exe doesn't like that we use the fs register, so we need to tell it to stop caring.         
+        ASSUME FS:NOTHING                       ; ml.exe doesn't like that we use the fs register, so we need to tell it to stop caring.
         mov esi, fs:[ecx+30h]                   ; Pointer to PEB
-        ASSUME FS:ERROR 
+        ASSUME FS:ERROR
         mov esi, [esi+0Ch]                      ; PEB->LDR
         mov esi, [esi+1Ch]                      ; PEB->LDR->InInitOrder (a linked list)
 
@@ -107,7 +107,7 @@ next_module:
         mov ebx, [esi+8h]                       ; InInitOrder[X].base_address
         mov edi, [esi+20h]                      ; InInitOrder[X].module_name (unicode)
         mov esi, [esi]                          ; InInitOrder[X].flink (next module)
-        cmp [edi+12*2], cx                      ; check if 12th char is \0        
+        cmp [edi+12*2], cx                      ; check if 12th char is \0
         jne next_module                         ; try next module
         jmp resolve_symbols_kernel32
 
@@ -119,7 +119,7 @@ find_function:                                  ; ebx = base address of the dll 
         mov ecx, [edi+18h]                      ; ecx = Number of names (The number of functions in the dll)
         mov eax, [edi+20h]                      ; eax = AddressOfNames RVA
         add eax, ebx                            ; eax = AddressOfNames VMA
-        mov [ebp-8h], eax                       ; Save eax for later 
+        mov [ebp-8h], eax                       ; Save eax for later
 
 find_function_loop:
         jecxz find_function_finished            ; If ecx is zero, jump to find_function_finished
@@ -145,9 +145,9 @@ compute_hash_again:
 compute_hash_finished:
 
 ; Once the function name is hashed, we can compare it to the hashed function name we are looking for
-find_function_compare: 
+find_function_compare:
         cmp edx, [esp+24h]                      ; Compare the hash with the computed hash
-        jnz find_function_loop                  ; If not equal, get the next function  
+        jnz find_function_loop                  ; If not equal, get the next function
         mov edx, [edi+24h]                      ; edx = AddressOfNameOrdinals RVA
         add edx, ebx                            ; edx = AddressOfNameOrdinals VMA
         mov cx, [edx+2h*ecx]                    ; Get the function's ordinal
@@ -161,11 +161,11 @@ find_function_finished:
         popad                                   ; restore all the registers again
         mov [ebp+ecx], eax                      ;
         sub ecx, 0fffffffch                     ; increase ecx by 4 (size of dword), and avoid nullbytes
-        ret   
+        ret
 
 ; An egghunter is a small bit of code, that we can use to brute-force search the stack for a given value: DAVEDAVE
-egghunter: 
-        mov edi, ebp                            ; Our current ebp, which is not pointing correctly 
+egghunter:
+        mov edi, ebp                            ; Our current ebp, which is not pointing correctly
         mov eax, 045564144h                     ; DAVE
 find_egg:
         inc edi                                 ; increase address by 1
@@ -177,23 +177,23 @@ find_egg:
 matched:
         mov ebx, edi                            ; move edi into ebx
         sub ebx, 0ch                            ; adjust ebx
-        ret                                     
+        ret
 
 
-; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack, 
+; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
 ; example: https://medium.com/asecuritysite-when-bob-met-alice/ror13-and-its-linkage-to-api-calls-within-modules-c2191b35161d
 resolve_symbols_kernel32:
         mov cl, 10h                             ; ECX will be used as an index to where on ebp the function address will be stored
         push 0ec0e4e8eh                         ; LoadLibararyA hash
         call find_function                      ; call find_function
         push 073e2d87eh                         ; ExitProcess hash
-        call find_function          
+        call find_function
         push 0d3324904h                         ; GetModuleHandleA hash
-        call find_function          
+        call find_function
         push 036ef7370h                         ; GetCommandLineA hash
-        call find_function                  
+        call find_function
         push 0867ae3d7h                         ; GetStartupInfoA hash
-        call find_function          
+        call find_function
 
 load_user32:                                    ; Push the string of user32.dll onto the string in reverse order
         xor eax, eax                            ; \0
@@ -262,20 +262,20 @@ MainEntry:
         mov [ebp+64h], eax                      ; commandLineStr is saved
 
         ; GetStartupInfoA
-        add esp,0FFFFFFBCh                      ; Setting up stack for STARTUPINFO structure of size 
+        add esp,0FFFFFFBCh                      ; Setting up stack for STARTUPINFO structure of size
         push esp                                ; Pointer to struct
         call dword ptr[ebp+20h]                 ; Call GetStartupInfoA
         mov eax, [esp+30h]                      ; Save sui.dwFlags
         xor ecx, ecx                            ; ecx = zero
-        inc ecx                                 ; ecx = 1 
+        inc ecx                                 ; ecx = 1
         test eax, ecx                           ; Find out if wShowWindow should be used
 	jz @1
         mov eax, [esp+2ch]                      ; dwFlags is located at esp+0x2c
 	push ax	                   		; If the show window flag bit was nonzero, we use wShowWindow
 	jmp @2
 @1:
-	push 0ah			        ; Use the default 
-@2:	
+	push 0ah			        ; Use the default
+@2:
         sub esp,0FFFFFFBCh                      ; clean up stack
         push [ebp+64h]                          ; CommandlineStr
         xor eax, eax                            ; null
@@ -291,7 +291,7 @@ WinMain:
         mov [ebp+68h], eax                      ; Save handle
 
         ; LoadCursorA
-        push 7F00h                              ; Use the default cursor 
+        push 7F00h                              ; Use the default cursor
 	xor eax, eax
         push	eax	                        ; null
         call dword ptr[ebp+28h]                 ; Call LoadCursorA
@@ -299,7 +299,7 @@ WinMain:
 
         ; MyWinClass String pushed in reverse order in hex
         xor eax, eax
-        mov ax, 07373h 
+        mov ax, 07373h
         push eax
         push 0616c436eh
         push 06957794dh
@@ -307,7 +307,7 @@ WinMain:
 
         ; Dave's Tiny App pushed in reverse order in hex
         xor eax, eax
-        push eax                                
+        push eax
         push 0707041h
         push 020796e69h
         push 054207327h
@@ -326,7 +326,7 @@ WinMain:
         push eax                                ; cbWndExtra = null
         push eax                                ; cbClsExtra = null
         mov eax, OFFSET WndProc                 ; lpfnWndProc
-        push eax                                
+        push eax
         mov eax, 00002h OR 00001h               ; style
         push eax
         mov eax, 30h                            ; cbSize, WNDCLASSEXA size is 48 = 0x30
@@ -383,7 +383,7 @@ DoneMessages:
         mov eax, dword ptr [ebp-14h]            ; Set eax to address of wParam of Msg struct
 
 ; WinMainRet usually returns to MainEntry, where ExitProcess is called. Atm. we have lost our return address, so exit is just called from here.
-WinMainRet:           
+WinMainRet:
         ;Terminate process
         xor eax, eax
         push eax                                ; Exit Code
@@ -391,18 +391,18 @@ WinMainRet:
 
 WndProc: ; hWnd:ebp+8, uMsg:ebp+0c, wParam:ebp+10, lParam:ebp+14
         call egghunter                          ; ebp is incorrect at this point. We call our egghunter function to reposition it, and place it into ebx
-        push ebp                                ; We adheare to rules of stdcall. 
+        push ebp                                ; We adheare to rules of stdcall.
         mov ebp, esp                            ; we setup a new stack frame
         add esp, 0FFFFFFACh                     ; We need 84 bytes of space
 
-        cmp dword ptr[ebp+0ch], 00002h          ; cmp uMSG with WM_DESTROY = 0x0002          
-        jne NotWMDestroy                         
+        cmp dword ptr[ebp+0ch], 00002h          ; cmp uMSG with WM_DESTROY = 0x0002
+        jne NotWMDestroy
 
         push 0
         call dword ptr[ebx+44h]                 ; Call PostQuitMessage
         xor eax, eax
-        leave                                   ; this cleans up our 4 arguments. 
-        ret 10h                                 ; We have to specify this, since the compiler won't do it for us. 
+        leave                                   ; this cleans up our 4 arguments.
+        ret 10h                                 ; We have to specify this, since the compiler won't do it for us.
 
 NotWMDestroy: ; ps struct @ ebp-40 // rect struct @ ebp-50 // hdc @ edp-54
         cmp dword ptr[ebp+0ch], 0000Fh          ; cmp uMsg WM_PAINT
@@ -418,13 +418,13 @@ NotWMDestroy: ; ps struct @ ebp-40 // rect struct @ ebp-50 // hdc @ edp-54
         call dword ptr[ebx+5ch]                 ; Call setBkMode
 
         lea eax, [ebp-50h]                      ; rect
-        push eax                                ; 
+        push eax                                ;
         push dword ptr [ebp+8]                  ; push hWnd
         call dword ptr [ebx+4ch]                ; Call GetClientRect
 
         push 25h                                ; DT_SINGLELINE + DT_CENTER + DT_VCENTER
         lea eax, [ebp-50h]                      ; rect
-        push eax                                ; 
+        push eax                                ;
         push 0FFFFFFFFh                         ; -1
         push [ebx+70h]                          ; AppName
         push [ebp-54h]                          ; hdc
@@ -436,8 +436,8 @@ NotWMDestroy: ; ps struct @ ebp-40 // rect struct @ ebp-50 // hdc @ edp-54
         call dword ptr[ebx+54h]                 ; Call endPaint
 
         xor eax, eax                            ; return code
-        leave                                   ; this cleans up our 4 arguments. 
-        ret 10h                                 ; We have to specify this, since the compiler won't do it for us. 
+        leave                                   ; this cleans up our 4 arguments.
+        ret 10h                                 ; We have to specify this, since the compiler won't do it for us.
 
 NotWMPaint:
         push [ebp+14h]                          ; lParam
@@ -445,7 +445,7 @@ NotWMPaint:
         push [ebp+0ch]                          ; uMsg
         push [ebp+8h]                           ; hWnd
         call dword ptr[ebx+58h]                 ; call DefWindowProc
-        leave 
+        leave
         ret 10h                                 ; this cleans up our 4 arguments, but causes null bytes. Should be fixed
 
 END start				        ; Specify entry point, else _WinMainCRTStartup is assumed
