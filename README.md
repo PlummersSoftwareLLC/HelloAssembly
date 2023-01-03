@@ -16,4 +16,4 @@ The goal of this project is to make the smallest possible application, without c
   
 Please keep it readable and explain what you're doing in the comments!  And the smaller, the better!  
 
-Current size as of 12/30/2022 is 1536 bytes
+Current size as of 1/3/2023 is 1248 bytes
