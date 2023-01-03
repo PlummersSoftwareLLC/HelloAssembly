@@ -1,32 +1,32 @@
 ; //+--------------------------------------------------------------------------
 ; //
-; // File:        LittleWindows.asm  
+; // File:        LittleWindows.asm
 ; //
-; // HelloWindows - (c) 2020 Plummer's Software LLC.  All Rights Reserved.  
+; // HelloWindows - (c) 2020 Plummer's Software LLC.  All Rights Reserved.
 ; //
 ; // This file is part of the Dave's Garage episode series.
 ; //
 ; //    This is an attempt to make a functional Windows app in as few bytes as
-; //    possible.  
+; //    possible.
 ; //
 ; //    HelloWindows is free software: you can redistribute it and/or modify
 ; //    it under the terms of the GNU General Public License as published by
 ; //    the Free Software Foundation, either version 3 of the License, or
 ; //    (at your option) any later version.
-; //   
+; //
 ; //    HelloWindows is distributed in the hope that it will be useful,
 ; //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 ; //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ; //    GNU General Public License for more details.
-; //   
+; //
 ; //    You should have received a copy of the GNU General Public License
 ; //    along with Nightdriver.  It is normally found in copying.txt
 ; //    If not, see <https://www.gnu.org/licenses/>.
 ; //
-; // History:     Mar-22-2021   Davepl      
+; // History:     Mar-22-2021   Davepl
 ; //                              Created for HelloAssembly Episode
-; // 
-; //              Dec-30-2022   Lasse Hauballe Jensen aka. Fenrik 
+; //
+; //              Dec-30-2022   Lasse Hauballe Jensen aka. Fenrik
 ; //                              Import table optimization
 ; //
 ; // Note: Please avoid assembler macros such as if-then or invoke so
@@ -34,11 +34,11 @@
 ; //
 ; //---------------------------------------------------------------------------
 
-; A shellcoders approach to creating the tiny Windows application. The shellcoding 
+; A shellcoders approach to creating the tiny Windows application. The shellcoding
 ; technique was learned from Offensive Security's Exploit Developer Course
 
 ; We need to dynamically load kernel32 (already loaded), user32, and gdi32
-; We then need to obtain the address for the following functions: 
+; We then need to obtain the address for the following functions:
 ;
 ; LoadLibraryA      ebp+10      (kernel32.dll)
 ; ExitProcess 	    ebp+14    	(kernel32.dll)
@@ -54,7 +54,7 @@
 ; TranslateMessage  ebp+3c    	(user32.dll)
 ; DispatchMessageA  ebp+40    	(user32.dll)
 ; PostQuitMessage   ebp+44    	(user32.dll)
-; BeginPaint	    ebp+48    	(user32.dll) 
+; BeginPaint	    ebp+48    	(user32.dll)
 ; GetClientRect     ebp+4c    	(user32.dll)
 ; DrawTextA         ebp+50    	(user32.dll)
 ; EndPaint          ebp+54    	(user32.dll)
@@ -62,7 +62,7 @@
 ; SetBkMode         ebp+5c    	(gdi32.dll)
 
 ; Global variables and structures
-; hInstance = ebp+60 
+; hInstance = ebp+60
 ; CommandLine = ebp+64
 ; StartupInfoA = ebp+68
 
@@ -82,12 +82,12 @@ include windows.inc             ; Main windows header file (akin to Windows.h in
 
 ; Forward declarations - Our main entry point will call forward to WinMain, so we need to define it here
 
-WinMain proto :DWORD, :DWORD, :DWORD, :DWORD	; Forward decl for MainEntry 
+WinMain proto :DWORD, :DWORD, :DWORD, :DWORD	; Forward decl for MainEntry
 
 ; Uninitialized data - Basically just reserves address space
-.DATA?            
+.DATA?
 
-pEbp	        DWORD ?    	        ;  pEbp is a place on the stack that we save a lot of variables. 
+pEbp	        DWORD ?    	        ;  pEbp is a place on the stack that we save a lot of variables.
 
 ;-------------------------------------------------------------------------------------------------------------------
 .CODE            ; Here is where the program itself lives
@@ -103,9 +103,9 @@ start endp
 
 find_kernel32:
         xor ecx, ecx                            ; ecx = 0
-        ASSUME FS:NOTHING                       ; ml.exe doesn't like that we use the fs register, so we need to tell it to stop caring.         
+        ASSUME FS:NOTHING                       ; ml.exe doesn't like that we use the fs register, so we need to tell it to stop caring.
         mov esi, fs:[ecx+30h]                   ; Pointer to PEB
-        ASSUME FS:ERROR 
+        ASSUME FS:ERROR
         mov esi, [esi+0Ch]                      ; PEB->LDR
         mov esi, [esi+1Ch]                      ; PEB->LDR->InInitOrder (a linked list)
 
@@ -114,7 +114,7 @@ next_module:
         mov ebx, [esi+8h]                       ; InInitOrder[X].base_address
         mov edi, [esi+20h]                      ; InInitOrder[X].module_name (unicode)
         mov esi, [esi]                          ; InInitOrder[X].flink (next module)
-        cmp [edi+12*2], cx                      ; check if 12th char is \0        
+        cmp [edi+12*2], cx                      ; check if 12th char is \0
         jne next_module                         ; try next module
         jmp resolve_symbols_kernel32
 
@@ -126,7 +126,7 @@ find_function:                                  ; ebx = base address of the dll 
         mov ecx, [edi+18h]                      ; ecx = Number of names (The number of functions in the dll)
         mov eax, [edi+20h]                      ; eax = AddressOfNames RVA
         add eax, ebx                            ; eax = AddressOfNames VMA
-        mov [ebp-4h], eax                       ; Save eax for later 
+        mov [ebp-4h], eax                       ; Save eax for later
 
 find_function_loop:
         jecxz find_function_finished            ; If ecx is zero, jump to find_function_finished
@@ -150,9 +150,9 @@ compute_hash_again:
         jmp compute_hash_again                  ; loop
 
 ; Once the function name is hashed, we can compare it to the hashed function name we are looking for
-find_function_compare: 
+find_function_compare:
         cmp edx, [esp+24h]                      ; Compare the hash with the computed hash
-        jnz find_function_loop                  ; If not equal, get the next function  
+        jnz find_function_loop                  ; If not equal, get the next function
         mov edx, [edi+24h]                      ; edx = AddressOfNameOrdinals RVA
         add edx, ebx                            ; edx = AddressOfNameOrdinals VMA
         mov cx, [edx+2h*ecx]                    ; Get the function's ordinal
@@ -166,16 +166,16 @@ find_function_finished:
         popad                                   ; restore all the registers again
         ret                                     ; return
 
-; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack, 
+; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
 ; example: https://medium.com/asecuritysite-when-bob-met-alice/ror13-and-its-linkage-to-api-calls-within-modules-c2191b35161d
 
 resolve_symbols_kernel32:
         push 0ec0e4e8eh                         ; LoadLibararyA hash
-        call find_function                      
+        call find_function
         mov [ebp+10h], eax                      ; Save address of LoadLibraryA
         push 073e2d87eh                         ; ExitProcess hash
         call find_function
-        mov [ebp+14h], eax                      ; Save ExitProcess  
+        mov [ebp+14h], eax                      ; Save ExitProcess
         push 0d3324904h                         ; GetModuleHandleA hash
         call find_function
         mov [ebp+18h], eax                      ; Save address of GetModuleHandleA
@@ -258,13 +258,13 @@ resolve_symbols_gdi32:
 MainEntry proc
         LOCAL	sui:STARTUPINFOA
         mov ebx, [pEbp]                         ; The pointer to our stack frame
-        
+
         ; GetModuleHandleA
         xor eax, eax                            ; eax = zero
         push eax                                ; Push eax to the stack
         call dword ptr[ebx+18h]                 ; Call GetModuleHandleA
         mov [ebx+60h], eax                      ; hInstance is saved
-       
+
         ; GetCommandLineA
         call dword ptr[ebx+1ch]                 ; Call GetCommandLineA
         mov [ebx+64h], eax                      ; commandLineStr is saved
@@ -278,8 +278,8 @@ MainEntry proc
         push sui.wShowWindow	                ; If the show window flag bit was nonzero, we use wShowWindow
     jmp @2
 @1:
-    push 0ah                     	        	; Use the default 
-@2:	
+    push 0ah                     	        	; Use the default
+@2:
         push [ebx+64h]                          ; CommandlineStr
         xor eax, eax                            ; null
         push eax
@@ -306,7 +306,7 @@ WinMain proc hInst:DWORD, hPrevInst:DWORD, CmdLine:DWORD, CmdShow:DWORD
         call 	dword ptr[ebx+24h]              	; Call LoadIconA
         mov [ebx+68h], eax                      ; Save handle
         ; LoadCursorA
-        push 7F00h                              ; Use the default cursor 
+        push 7F00h                              ; Use the default cursor
         xor eax, eax
         push	eax	                        	; null
         call dword ptr[ebx+28h]                 ; Call LoadCursorA
@@ -314,7 +314,7 @@ WinMain proc hInst:DWORD, hPrevInst:DWORD, CmdLine:DWORD, CmdShow:DWORD
 
         ; MyWinClass String pushed in reverse order in hex
         xor eax, eax
-        mov ax, 07373h 
+        mov ax, 07373h
         push eax
         push 0616c436eh
         push 06957794dh
@@ -323,7 +323,7 @@ WinMain proc hInst:DWORD, hPrevInst:DWORD, CmdLine:DWORD, CmdShow:DWORD
         ; Dave's Tiny App pushed in reverse order in hex
 
         xor eax, eax
-        push eax                                
+        push eax
         push 0707041h
         push 020796e69h
         push 054207327h
@@ -343,7 +343,7 @@ WinMain proc hInst:DWORD, hPrevInst:DWORD, CmdLine:DWORD, CmdShow:DWORD
         push eax                                ; cbWndExtra = null
         push eax                                ; cbClsExtra = null
         mov eax, OFFSET WndProc                 ; lpfnWndProc
-        push eax                                
+        push eax
         mov eax, 00002h OR 00001h               ; style
         push eax
         mov eax, 30h                            ; cbSize, WNDCLASSEXA size is 48 = 0x30
@@ -414,7 +414,7 @@ WndProc proc hWnd:DWORD, uMsg:DWORD, wParam:DWORD, lParam:DWORD
     LOCAL 	ps:PAINTSTRUCT            ; Local stack variables
     LOCAL	rect:RECT
     LOCAL	hdc:HDC
-        
+
         mov ebx, pEbp
         cmp uMsg, 0002h                         ; cmp uMSG with WM_DESTROY = 0x0002
         jne NotWMDestroy
@@ -423,7 +423,7 @@ WndProc proc hWnd:DWORD, uMsg:DWORD, wParam:DWORD, lParam:DWORD
         call dword ptr[ebx+44h]                 ; Call PostQuitMessage
         xor eax, eax
         ret
-                                   
+
 
 NotWMDestroy:
 
