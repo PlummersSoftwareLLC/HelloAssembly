@@ -40,26 +40,26 @@
 ; We need to dynamically load kernel32 (already loaded), user32, and gdi32
 ; We then need to obtain the address for the following functions: 
 ;
-; LoadLibraryA      ebp+10          (kernel32.dll)
-; ExitProcess 	    ebp+14			(kernel32.dll)
-; GetModuleHandle   ebp+18			(kernel32.dll)
-; GetCommandLineA 	ebp+1c			(kernel32.dll)
-; GetStartupInfoA 	ebp+20			(kernel32.dll)
-; LoadIconA 		ebp+24			(user32.dll)
-; LoadCursorA 		ebp+28  		(user32.dll)
-; RegisterClassExA 	ebp+2c			(user32.dll)
-; CreateWindowExA 	ebp+30			(user32.dll)
-; UpdateWindow 		ebp+34			(user32.dll)
-; GetMessageA 		ebp+38			(user32.dll)
-; TranslateMessage 	ebp+3c			(user32.dll)
-; DispatchMessageA 	ebp+40			(user32.dll)
-; PostQuitMessage 	ebp+44			(user32.dll)
-; BeginPaint	    ebp+48			(user32.dll) 
-; GetClientRect 	ebp+4c			(user32.dll)
-; DrawTextA 		ebp+50			(user32.dll)
-; EndPaint      	ebp+54			(user32.dll)
-; DefWindowProcA 	ebp+58			(user32.dll)
-; SetBkMode 		ebp+5c			(gdi32.dll)
+; LoadLibraryA      ebp+10      (kernel32.dll)
+; ExitProcess 	    ebp+14    	(kernel32.dll)
+; GetModuleHandle   ebp+18    	(kernel32.dll)
+; GetCommandLineA   ebp+1c    	(kernel32.dll)
+; GetStartupInfoA   ebp+20    	(kernel32.dll)
+; LoadIconA         ebp+24    	(user32.dll)
+; LoadCursorA       ebp+28      (user32.dll)
+; RegisterClassExA  ebp+2c    	(user32.dll)
+; CreateWindowExA   ebp+30    	(user32.dll)
+; UpdateWindow      ebp+34    	(user32.dll)
+; GetMessageA       ebp+38    	(user32.dll)
+; TranslateMessage  ebp+3c    	(user32.dll)
+; DispatchMessageA  ebp+40    	(user32.dll)
+; PostQuitMessage   ebp+44    	(user32.dll)
+; BeginPaint	    ebp+48    	(user32.dll) 
+; GetClientRect     ebp+4c    	(user32.dll)
+; DrawTextA         ebp+50    	(user32.dll)
+; EndPaint          ebp+54    	(user32.dll)
+; DefWindowProcA    ebp+58    	(user32.dll)
+; SetBkMode         ebp+5c    	(gdi32.dll)
 
 ; Global variables and structures
 ; hInstance = ebp+60 
@@ -73,24 +73,24 @@
 
 ; Compiler directives and includes
 
-.386						; Full 80386 instruction set and mode
-.model flat, stdcall				; All 32-bit and later apps are flat. Used to include "tiny, etc"
-option casemap:none				; Preserve the case of system identifiers but not our own, more or less
+.386                            ; Full 80386 instruction set and mode
+.model flat, stdcall            ; All 32-bit and later apps are flat. Used to include "tiny, etc"
+option casemap:none             ; Preserve the case of system identifiers but not our own, more or less
 
 ; Include files
-include windows.inc				; Main windows header file (akin to Windows.h in C)
+include windows.inc             ; Main windows header file (akin to Windows.h in C)
 
 ; Forward declarations - Our main entry point will call forward to WinMain, so we need to define it here
 
 WinMain proto :DWORD, :DWORD, :DWORD, :DWORD	; Forward decl for MainEntry 
 
 ; Uninitialized data - Basically just reserves address space
-.DATA?						
+.DATA?            
 
-pEbp	        DWORD ?			        ;  pEbp is a place on the stack that we save a lot of variables. 
+pEbp	        DWORD ?    	        ;  pEbp is a place on the stack that we save a lot of variables. 
 
 ;-------------------------------------------------------------------------------------------------------------------
-.CODE						; Here is where the program itself lives
+.CODE            ; Here is where the program itself lives
 ;-------------------------------------------------------------------------------------------------------------------
 ; Setting up our own stack frame
 start proc
@@ -300,9 +300,9 @@ WinMain proc hInst:DWORD, hPrevInst:DWORD, CmdLine:DWORD, CmdShow:DWORD
         mov ebx, [pEbp]                         ; ebx = pEbp, our address space for variables
 
         ; LoadIconA
-        push	7F00h				            ; Use the default application icon  IDI_APPLICATION = 7F00h
+        push	7F00h                    ; Use the default application icon  IDI_APPLICATION = 7F00h
         xor eax, eax
-        push	eax	                       		; null
+        push	eax	                           ; null
         call 	dword ptr[ebx+24h]              	; Call LoadIconA
         mov [ebx+68h], eax                      ; Save handle
         ; LoadCursorA
@@ -411,7 +411,7 @@ WinMain endp
 
 WndProc proc hWnd:DWORD, uMsg:DWORD, wParam:DWORD, lParam:DWORD
 
-    LOCAL 	ps:PAINTSTRUCT		        		; Local stack variables
+    LOCAL 	ps:PAINTSTRUCT            ; Local stack variables
     LOCAL	rect:RECT
     LOCAL	hdc:HDC
         
@@ -472,4 +472,4 @@ NotWMPaint:
 
 WndProc endp
 
-END start				        				; Specify entry point, else _WinMainCRTStartup is assumed
+END start                        ; Specify entry point, else _WinMainCRTStartup is assumed
