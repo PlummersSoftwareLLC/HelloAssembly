@@ -5,7 +5,7 @@
 The smallest possible complete Windows application
 From the episode "Hello, Assembly" on Dave's Garage:
 
-https://youtu.be/b0zxIfJJLAY
+<https://youtu.be/b0zxIfJJLAY>
 
 - Current code is in the folder "Lasse"
 - Original code in the folder "TinyOriginal"
