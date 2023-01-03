@@ -176,7 +176,7 @@ resolve_symbols_kernel32:
         push hash_GetStartupInfoA
         call find_function
 
-load_user32:                                    ; Push the "user32.dll" onto the string in reverse order
+load_user32:                                    ; Push "user32.dll" onto the stack in reverse order
         push txt_ll
         push txt_32_d
         push txt_user
