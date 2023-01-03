@@ -71,9 +71,9 @@
 ; CommandLine           ebp+64
 
 ; How to build
-; ml /coff -link /subsystem:windows LittleWindows.asm
+; ml /coff LittleWindows.asm -link /subsystem:windows
 ;  or, for example. if you need to specify include path to windows.inc:
-; ml /coff /I c:\masm32\include -link /subsystem:windows LittleWindows.asm
+; ml /coff /I c:\masm32\include LittleWindows.asm -link /subsystem:windows
 
 ; Compiler directives and includes
 
