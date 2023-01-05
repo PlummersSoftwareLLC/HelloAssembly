@@ -36,7 +36,7 @@
 ; //                              Added tailor-made include and other readability improvements, shaved 16 more bytes off the exe
 ; //
 ; //              Jan-05-2023   Terje Mathisen
-; //                              Two small tweaks that removed one instruction each
+; //                              Three small tweaks that removed one instruction each
 ; //
 ; // Note: Please avoid assembler macros such as if-then or invoke so
 ; //       that the code remains fully transparent!
@@ -84,8 +84,7 @@ option casemap:none                             ; Preserve the case of system id
 
 ; Setting up our own stack frame
 start proc
-        mov ebp, esp
-        add esp, sp_inv_main                    ; this gives 240 bytes, more than enough for our variables
+        enter -sp_inv_main,0                    ; this gives 240 bytes, more than enough for our variables
         mov eax, txt_DAVE                       ; DAVE spelled backward moved into eax
         mov [ebp + sp_egg], eax                 ; DAVE placed in EBP
         mov [ebp + sp_egg + 4], eax             ; DAVE placed again, right thereafter spelling: DAVEDAVE. This will be our "egg" later
