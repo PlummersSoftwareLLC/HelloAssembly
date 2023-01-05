@@ -84,7 +84,7 @@ option casemap:none                             ; Preserve the case of system id
 
 ; Setting up our own stack frame
 start proc
-        enter -sp_inv_main,0                    ; this gives 240 bytes, more than enough for our variables
+        enter -sp_inv_main, 0                   ; this gives 240 bytes, more than enough for our variables
         mov eax, txt_DAVE                       ; DAVE spelled backward moved into eax
         mov [ebp + sp_egg], eax                 ; DAVE placed in EBP
         mov [ebp + sp_egg + 4], eax             ; DAVE placed again, right thereafter spelling: DAVEDAVE. This will be our "egg" later
@@ -415,9 +415,7 @@ WinMainRet:
 
 WndProc:
         call egghunter                          ; ebp is incorrect at this point. We call our egghunter function to reposition it, and place it into ebx
-        push ebp                                ; we adheare to rules of stdcall
-        mov ebp, esp                            ; we setup a new stack frame
-        add esp, sp_inv_WndProc                 ; we need 84 bytes of space
+        enter -sp_inv_WndProc, 0                ; use stdcall, setup a new stack frame of 84 bytes
 
         cmp dword ptr[ebp + WP_uMsg], WM_DESTROY
         jne NotWMDestroy
