@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The smallest possible complete Windows application
+The smallest possible complete Windows application.  
 From the episode "Hello, Assembly" on Dave's Garage:
 
 <https://youtu.be/b0zxIfJJLAY>
@@ -19,6 +19,19 @@ The goal of this project is to make the smallest possible application, without c
 - Paints the background and some text centered in the middle, equal to or larger than "Dave's Tiny App"
   
 Please keep it readable and explain what you're doing in the comments!  And the smaller, the better!  
+
+## Note on virus scanners
+
+The optimizations embedded in the current code in the Lasse directory, and those applied by Crinkler in general (if used) are rather aggressive, and seem to resemble strategies applied by certain types of malware. Because of this, your virus scanner may flag the executables as "suspected malware", and refuse to start them or even put them in quarantine. Depending on the antivirus solution you use, you may be able to whitelist/exclude the executables to restore them and get them to work (this is known to happen with F-Secure SAFE). It's also possible that you have to temporarily disable your virus scanner altogether (which has been observed with Microsoft Defender).
+
+<!-- markdownlint-disable-next-line MD033 -->
+<ins>**Please note:**</ins>
+
+- It is entirely your responsibility to decide if you want to disable your virus scanner or not.
+- If you do temporarily disable your virus scanner, we strongly recommend you re-enable it immediately after you test the executables you build out of this repository's code.
+- Although we **do** promise that this repository does not contain any malicious code, we **cannot** guarantee that this is true for any code or executables (like supposed builds of this repository's applications) that you get from other sources.
+
+If your virus scanner intervenes when you try to run the executables that come out of this repository's source code, and you don't feel comfortable with (partly) disabling your virus scanner, then don't do it. We do understand and we really won't hold it against you. :)
 
 ## Build instructions
 
