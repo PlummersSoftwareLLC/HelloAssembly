@@ -26,7 +26,7 @@ Please keep it readable and explain what you're doing in the comments!  And the 
 
 ## Note on virus scanners
 
-The optimizations embedded in the current code in the Lasse directory, and those applied by Crinkler in general (if used) are rather aggressive, and seem to resemble strategies applied by certain types of malware. Because of this, your virus scanner may flag the executables as "suspected malware", and refuse to start them or even put them in quarantine. Depending on the antivirus solution you use, you may be able to whitelist/exclude the executables to restore them and get them to work (this is known to happen with F-Secure SAFE). It's also possible that you have to temporarily disable your virus scanner altogether (which has been observed with Microsoft Defender).
+The optimizations embedded in the current code in the Lasse directory, and those applied by Crinkler in general (if used) are rather aggressive, and seem to resemble strategies applied by certain types of malware. Because of this, your virus scanner may flag the executables you build out of the source code as "suspected malware". That can make it impossible to start them, or your virus scanner can even put them in quarantine. Depending on the antivirus solution you use, you may be able to whitelist/exclude the executables to restore them and get them to work (this is known to happen with F-Secure SAFE). It's also possible that you have to temporarily disable your virus scanner altogether (which has been observed with Microsoft Defender).
 
 <!-- markdownlint-disable-next-line MD033 -->
 <ins>**Please note:**</ins>
