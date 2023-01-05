@@ -166,8 +166,7 @@ find_egg:
         inc edi                                 ; increase address by 1
         cmp dword ptr ds:[edi], eax             ; check for "DAVE"
         jne find_egg                            ; loop if not found
-        add edi, 4                              ; move to next 4 bytes
-        cmp dword ptr ds:[edi], eax             ; check for "DAVE" again
+        cmp dword ptr ds:[edi+4], eax           ; check for "DAVE" again
         jne find_egg                            ; loop if not found
 matched:
         lea ebx,[edi-sp_egg-4]                  ; return the adjusted place we found
