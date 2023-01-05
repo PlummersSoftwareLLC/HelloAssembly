@@ -169,10 +169,10 @@ find_egg:
         inc edi                                 ; increase address by 1
         cmp dword ptr ds:[edi], eax             ; check for "DAVE"
         jne find_egg                            ; loop if not found
-        cmp dword ptr ds:[edi+4], eax           ; check for "DAVE" again
+        cmp dword ptr ds:[edi + 4], eax         ; check for "DAVE" again
         jne find_egg                            ; loop if not found
 matched:
-        lea ebx,[edi-sp_egg]                    ; return the adjusted place we found
+        lea ebx,[edi - sp_egg]                  ; return the adjusted place we found
         ret
 
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
