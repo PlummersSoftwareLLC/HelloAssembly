@@ -1,10 +1,11 @@
 # HelloAssembly
 
-The smallest possible complete Windows application.  
+The smallest possible complete Windows application.
+
 From the episode ["Hello, Assembly! Retrocoding the World's Smallest Windows App in x86 ASM"](https://youtu.be/b0zxIfJJLAY) on Dave's Garage:  
 [![Hello, Assembly! Retrocoding the World's Smallest Windows App in x86 ASM](http://i3.ytimg.com/vi/b0zxIfJJLAY/hqdefault.jpg)](https://youtu.be/b0zxIfJJLAY)
 
-And the follow-up video ["C vs ASM: Making the World's SMALLEST Windows App"](https://youtu.be/-Vw-ONPfaFk):  
+And the follow-up episode ["C vs ASM: Making the World's SMALLEST Windows App"](https://youtu.be/-Vw-ONPfaFk):  
 [![C vs ASM: Making the World's SMALLEST Windows App](http://i3.ytimg.com/vi/-Vw-ONPfaFk/hqdefault.jpg)](https://youtu.be/-Vw-ONPfaFk)
 
 ## Introduction
