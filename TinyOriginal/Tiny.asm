@@ -23,69 +23,53 @@ includelib gdi32.lib		; GDI32.dll
 
 ; Forward declarations - Our main entry point will call forward to WinMain, so we need to define it here
 
-WinMain proto :DWORD, :DWORD, :DWORD, :DWORD	; Forward decl for MainEntry 
+WinMain proto :DWORD, :DWORD, :DWORD, :DWORD	         ; Forward decl for MainEntry 
 
 ; Constants and Datra
 
-WindowWidth	equ 640				; How big we'd like our main window
+WindowWidth	equ 640				         ; How big we'd like our main window
 WindowHeight	equ 480
 
 .DATA
 
-ClassName    	db "MyWinClass", 0		; The name of our Window class
-AppName		db "Dave's Tiny App", 0		; The name of our main window
+ClassName    	db "C", 0              	                 ; The name of our Window class
+AppName		db "Dave's Tiny App", 0		         ; The name of our main window
 
-.DATA?						; Uninitialized data - Basically just reserves address space
+.DATA?						         ; Uninitialized data - Basically just reserves address space
 
-hInstance	HINSTANCE ?			; Instance handle (like the process id) of our application
-CommandLine	LPSTR	  ?                     ; Pointer to the command line text we were launched with
+hInstance	HINSTANCE ?			         ; Instance handle (like the process id) of our application
+CommandLine	LPSTR	  ?                              ; Pointer to the command line text we were launched with
 
 ;-------------------------------------------------------------------------------------------------------------------
-.CODE						; Here is where the program itself lives
+.CODE							; Here is where the program itself lives
 ;-------------------------------------------------------------------------------------------------------------------
 
-MainEntry proc
+MainEntry proc NEAR
 
-	LOCAL	sui:STARTUPINFOA		; Reserve stack space so we can load and inspect the STARTUPINFO
+	LOCAL	sui:STARTUPINFOA		        ; Reserve stack space so we can load and inspect the STARTUPINFO
+	LOCAL	wc:WNDCLASSEX			        ; Create these vars on the stack, hence LOCAL
+	LOCAL	msg:MSG
+	LOCAL	hwnd:HWND
 
-	push	NULL				; Get the instance handle of our app (NULL means ourselves)
-	call 	GetModuleHandle			; GetModuleHandle will return instance handle in EAX
-	mov	hInstance, eax			; Cache it in our global variable
+	push	NULL			        	; Get the instance handle of our app (NULL means ourselves)
+	call 	GetModuleHandle		        	; GetModuleHandle will return instance handle in EAX
+	mov	hInstance, eax		        	; Cache it in our global variable
 
-	call	GetCommandLineA			; Get the command line text ptr in EAX to pass on to main
+	call	GetCommandLineA		        	; Get the command line text ptr in EAX to pass on to main
 	mov	CommandLine, eax
 
 	; Call our WinMain and then exit the process with whatever comes back from it
 
-	lea	eax, sui			; Get the STARTUPINFO for this process
+	lea	eax, sui			        ; Get the STARTUPINFO for this process
 	push	eax
-	call	GetStartupInfoA			; Find out if wShowWindow should be used
+	call	GetStartupInfoA			        ; Find out if wShowWindow should be used
 	test	sui.dwFlags, STARTF_USESHOWWINDOW   
 	jz	@1
-	push	sui.wShowWindow			; If the show window flag bit was nonzero, we use wShowWindow
+	push	sui.wShowWindow			        ; If the show window flag bit was nonzero, we use wShowWindow
 	jmp	@2
 @1:
-	push	SW_SHOWDEFAULT			; Use the default 
+	push	SW_SHOWDEFAULT			        ; Use the default 
 @2:	
-	push	CommandLine
-	push	NULL
-	push	hInstance
-	call	WinMain
-
-	push	eax
-	call	ExitProcess
-
-MainEntry endp
-
-; 
-; WinMain - The traditional signature for the main entry point of a Windows programa
-;
-
-WinMain proc hInst:HINSTANCE, hPrevInst:HINSTANCE, CmdLine:LPSTR, CmdShow:DWORD
-
-	LOCAL	wc:WNDCLASSEX			; Create these vars on the stack, hence LOCAL
-	LOCAL	msg:MSG
-	LOCAL	hwnd:HWND
 
 	mov	wc.cbSize, SIZEOF WNDCLASSEX		; Fill in the values in the members of our windowclass
 	mov	wc.style, CS_HREDRAW or CS_VREDRAW	; Redraw if resized in either dimension
@@ -127,7 +111,7 @@ WinMain proc hInst:HINSTANCE, hPrevInst:HINSTANCE, CmdLine:LPSTR, CmdShow:DWORD
 	push	0					; Extended style bits, if any
 	call 	CreateWindowExA
 	cmp	eax, NULL
-	je	WinMainRet				; Fail and bail on NULL handle returned
+	je	MainRet				        ; Fail and bail on NULL handle returned
 	mov	hwnd, eax				; Window handle is the result, returned in eax
 
 	push	eax					; Force a paint of our window
@@ -159,11 +143,11 @@ DoneMessages:
 	
 	mov	eax, msg.wParam				; Return wParam of last message processed
 
-WinMainRet:
+MainRet:
 	
 	ret
 
-WinMain endp
+MainEntry endp
 
 ;
 ; WndProc - Our Main Window Procedure, handles painting and exiting
