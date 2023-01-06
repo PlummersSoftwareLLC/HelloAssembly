@@ -35,6 +35,9 @@
 ; //              Jan-03-2023   rbergen
 ; //                              Added tailor-made include and other readability improvements, shaved 16 more bytes off the exe
 ; //
+; //              Jan-06-2023   Terje Mathisen
+; //                              Some small tweaks that remove one or two instructions each
+; //
 ; // Note: Please avoid assembler macros such as if-then or invoke so
 ; //       that the code remains fully transparent!
 ; //
@@ -81,8 +84,7 @@ option casemap:none                             ; Preserve the case of system id
 
 ; Setting up our own stack frame
 start proc
-        mov ebp, esp
-        add esp, sp_inv_main                    ; this gives 240 bytes, more than enough for our variables
+        enter sp_main, 0                        ; this gives 240 bytes, more than enough for our variables
         mov eax, txt_DAVE                       ; DAVE spelled backward moved into eax
         mov [ebp + sp_egg], eax                 ; DAVE placed in EBP
         mov [ebp + sp_egg + 4], eax             ; DAVE placed again, right thereafter spelling: DAVEDAVE. This will be our "egg" later
@@ -166,12 +168,10 @@ find_egg:
         inc edi                                 ; increase address by 1
         cmp dword ptr ds:[edi], eax             ; check for "DAVE"
         jne find_egg                            ; loop if not found
-        add edi, 4                              ; move to next 4 bytes
-        cmp dword ptr ds:[edi], eax             ; check for "DAVE" again
+        cmp dword ptr ds:[edi + 4], eax         ; check for "DAVE" again
         jne find_egg                            ; loop if not found
 matched:
-        mov ebx, edi                            ; put the place we found in ebx...
-        sub ebx, sp_egg + 4                     ; ...and adjust it
+        lea ebx, [edi - sp_egg]                 ; return the adjusted place we found
         ret
 
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
@@ -415,9 +415,7 @@ WinMainRet:
 
 WndProc:
         call egghunter                          ; ebp is incorrect at this point. We call our egghunter function to reposition it, and place it into ebx
-        push ebp                                ; we adheare to rules of stdcall
-        mov ebp, esp                            ; we setup a new stack frame
-        add esp, sp_inv_WndProc                 ; we need 84 bytes of space
+        enter sp_WndProc, 0                     ; use stdcall, setup a new stack frame of 84 bytes
 
         cmp dword ptr[ebp + WP_uMsg], WM_DESTROY
         jne NotWMDestroy
