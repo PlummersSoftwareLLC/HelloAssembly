@@ -35,8 +35,8 @@
 ; //              Jan-03-2023   rbergen
 ; //                              Added tailor-made include and other readability improvements, shaved 16 more bytes off the exe
 ; //
-; //              Jan-05-2023   Terje Mathisen
-; //                              Four small tweaks that removed one or two instructions each
+; //              Jan-06-2023   Terje Mathisen
+; //                              Some small tweaks that remove one or two instructions each
 ; //
 ; // Note: Please avoid assembler macros such as if-then or invoke so
 ; //       that the code remains fully transparent!
