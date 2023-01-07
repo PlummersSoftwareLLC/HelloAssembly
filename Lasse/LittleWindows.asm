@@ -128,7 +128,7 @@ find_function_loop:
 ; We start by hashing the function name
 compute_hash:
         xor eax, eax
-        xor edx, edx
+        cdq                                     ; edx = 0
         cld                                     ; clear direction flag
 
 compute_hash_again:
@@ -328,7 +328,7 @@ WinMain:
         push [ebp + hIcon]
         push [ebp + lpszClassName]
         xor eax, eax                            ; set to 0 - we'll reuse
-        push 0                                  ; lpszMenuName = null
+        push eax                                ; lpszMenuName = null
         push COLOR_BTNSHADOW + 1                ; hbrBackground - Default brush colors are color plus one
         push [ebp + hCursor]
         push [ebp + hIcon]
@@ -358,7 +358,7 @@ WinMain:
         push eax                                ; dwExStyle = 0
         call dword ptr[ebp + fn_CreateWindowExA]
 
-        cmp eax, 0
+        test eax, eax                           ; cmp eax, 0
         je WinMainRet
         mov [ebp + hWnd], eax
         push eax
@@ -373,7 +373,7 @@ MessageLoop:
         push eax
         call dword ptr[ebp + fn_GetMessageA]
 
-        cmp eax, 0
+        test eax, eax                           ; cmp eax, 0
         je DoneMessages                         ; if result was 0, we're done
 
         lea eax, [ebp - sp_MSG]
