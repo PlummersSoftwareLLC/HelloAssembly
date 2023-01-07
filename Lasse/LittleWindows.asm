@@ -177,7 +177,8 @@ matched:
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
 ; example: https://medium.com/asecuritysite-when-bob-met-alice/ror13-and-its-linkage-to-api-calls-within-modules-c2191b35161d
 resolve_symbols_kernel32:
-        mov edi, 10h                             ; edi will be used as an index to where on ebp the function address will be stored
+        push 10h
+        pop edi                                 ; edi will be used as an index to where on ebp the function address will be stored 
 
         push hash_LoadLibraryA
         call find_function
@@ -202,7 +203,7 @@ load_user32:                                    ; Push "user32.dll" onto the sta
         call dword ptr[ebp + fn_LoadLibraryA]
 
 resolve_symbols_user32:
-        mov ebx, eax                            ; Load the base address of user32.dll into ebx
+        xchg eax, ebx                           ; Load the base address of user32.dll into ebx
 
         push hash_LoadIconA
         call find_function
@@ -254,7 +255,7 @@ load_gdi32:                                     ; push "gdi32.dll" onto the stac
         call dword ptr[ebp + fn_LoadLibraryA]
 
 resolve_symbols_gdi32:
-        mov ebx, eax                            ; ebx = base address of gdi32.dll
+        xchg eax, ebx                           ; ebx = base address of gdi32.dll
 
         push hash_SetBkMode
         call find_function
@@ -279,8 +280,7 @@ MainEntry:
         push esp                                ; Pointer to struct
         call dword ptr[ebp + fn_GetStartupInfoA]
         lea eax, (STARTUPINFOA ptr[esp]).wShowWindow
-        mov ecx, 1
-        test eax, ecx                           ; Find out if wShowWindow should be used
+        test al, 1                              ; Find out if wShowWindow should be used
         jz @1
         lea eax, (STARTUPINFOA ptr[esp]).dwFlags
         push ax	                                ; If the show window flag bit was nonzero, we use wShowWindow
@@ -422,9 +422,7 @@ WndProc:
 
         push 0
         call dword ptr[ebx + fn_PostQuitMessage]
-        xor eax, eax
-        leave                                   ; this cleans up our 4 arguments.
-        ret 10h                                 ; We have to specify this, since the compiler won't do it for us.
+        jmp short WndProcRet0
 
 NotWMDestroy:
         cmp dword ptr[ebp + WP_uMsg], WM_PAINT
@@ -458,7 +456,9 @@ NotWMDestroy:
         push [ebp + WP_hWnd]
         call dword ptr[ebx + fn_EndPaint]
 
-        xor eax, eax                            ; return code
+WndProcRet0:
+        xor eax, eax                            ; return code 0
+WndProcRet:
         leave                                   ; this cleans up our 4 arguments.
         ret 10h                                 ; We have to specify this, since the compiler won't do it for us.
 
@@ -468,7 +468,6 @@ NotWMPaint:
         push [ebp + WP_uMsg]
         push [ebp + WP_hWnd]
         call dword ptr[ebx + fn_DefWindowProcA]
-        leave
-        ret 10h                                 ; this cleans up our 4 arguments, but causes null bytes. Should be fixed
+        jmp short WndProcRet                    ; this cleans up our 4 arguments, but causes null bytes. Should be fixed
 
 END start                                       ; Specify entry point, else _WinMainCRTStartup is assumed
