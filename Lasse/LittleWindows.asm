@@ -177,8 +177,7 @@ matched:
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
 ; example: https://medium.com/asecuritysite-when-bob-met-alice/ror13-and-its-linkage-to-api-calls-within-modules-c2191b35161d
 resolve_symbols_kernel32:
-        xor edi, edi
-        mov di, 10h                             ; edi will be used as an index to where on ebp the function address will be stored
+        mov edi, 10h                             ; edi will be used as an index to where on ebp the function address will be stored
 
         push hash_LoadLibraryA
         call find_function
