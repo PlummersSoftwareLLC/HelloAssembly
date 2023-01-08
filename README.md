@@ -47,7 +47,7 @@ The applications can be built with plain MASM32 11.0, which can be obtained from
 - Current code in the Lasse directory:
   
   ```shell
-  ml /coff LittleWindows.asm /link /merge:.rdata=.text /merge:.data=.text /align:16 /subsystem:windows LittleWindows.obj
+  ml /coff LittleWindows.asm /link /merge:.rdata=.text /merge:.data=.text /align:4 /subsystem:windows LittleWindows.obj
   ```
 
   The executable will be named LittleWindows.exe.
@@ -80,7 +80,7 @@ After installing it, the build instructions for both applications are:
 - Original code in the TinyOriginal directory:
 
   ```shell
-  ml /c /coff /IC:\masm32\include .\Tiny.asm 
+  ml /c /coff /IC:\masm32\include Tiny.asm 
   crinkler.exe /NODEFAULTLIB /ENTRY:MainEntry /SUBSYSTEM:WINDOWS /TINYHEADER /NOINITIALIZERS /UNSAFEIMPORT /ORDERTRIES:1000 /TINYIMPORT /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.20348.0\um\x86" kernel32.lib user32.lib gdi32.lib Tiny.obj
   ```
 
