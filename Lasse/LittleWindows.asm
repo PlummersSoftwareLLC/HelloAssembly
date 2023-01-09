@@ -203,7 +203,7 @@ load_user32:                                    ; Push "user32.dll" onto the sta
         call dword ptr[ebp + fn_LoadLibraryA]
 
 resolve_symbols_user32:
-        xchg eax, ebx                           ; Load the base address of user32.dll into ebx
+        xchg ebx, eax                           ; Load the base address of user32.dll into ebx
 
         push hash_LoadIconA
         call find_function
@@ -255,7 +255,7 @@ load_gdi32:                                     ; push "gdi32.dll" onto the stac
         call dword ptr[ebp + fn_LoadLibraryA]
 
 resolve_symbols_gdi32:
-        xchg eax, ebx                           ; ebx = base address of gdi32.dll
+        xchg ebx, eax                           ; ebx = base address of gdi32.dll
 
         push hash_SetBkMode
         call find_function
@@ -279,15 +279,14 @@ MainEntry:
         add esp,sp_inv_STARTUPINFOA             ; Setting up stack for STARTUPINFOA structure
         push esp                                ; Pointer to struct
         call dword ptr[ebp + fn_GetStartupInfoA]
-        lea eax, (STARTUPINFOA ptr[esp]).wShowWindow
-        test al, 1                              ; Find out if wShowWindow should be used
-        jz @1
-        lea eax, (STARTUPINFOA ptr[esp]).dwFlags
-        push ax	                                ; If the show window flag bit was nonzero, we use wShowWindow
-        jmp @2
-@1:
-        push 0ah                                ; Use the default
+
+        mov eax, (STARTUPINFOA ptr[esp]).dwFlags; Find out if wShowWindow should be used
+        and eax, 1                              ; check if STARTF_USESHOWWINDOW flag set, and clear rest of eax
+        mov al, 0ah                             ; Use the default (SW_SHOWDEFAULT)
+        jz @2                                   ; jump if no flag
+        lea eax, (STARTUPINFOA ptr[esp]).wShowWindow ; If the show window flag bit was nonzero, use wShowWindow
 @2:
+        push eax
         sub esp,sp_inv_STARTUPINFOA             ; Clean up stack
         push [ebp + lpszCommandLine]
         push 0                                  ; null
@@ -338,8 +337,7 @@ WinMain:
         push OFFSET WndProc
         push CS_HREDRAW OR CS_VREDRAW           ; style
         push SIZEOF WNDCLASSEXA                 ; cbSize
-        lea eax, [esp]
-        push eax
+        push esp                                ; ptr to WNDCLASSEXA structure
         call dword ptr[ebp + fn_RegisterClassExA]
 
         ; Setting up stack and calling CreateWindowExA
@@ -350,16 +348,21 @@ WinMain:
         push eax                                ; hWndParent = null
         push 480                                ; nHeight
         push 640                                ; nWidth
-        push CW_USEDEFAULT                      ; y
-        push CW_USEDEFAULT                      ; x
+        cdq                                     ; edx = 0
+        stc                                     ; set carry flag = 1
+        rcr edx, 1                              ; rotate carry flag into most sig bit of edx
+                                                ; edx is now equal to CW_USEDEFAULT (0x80000000)
+                                                ; (this saves 4 bytes over push CW_USEDEFAULT)
+        push edx                                ; y = CW_USEDEFAULT
+        push edx                                ; x = CW_USEDEFAULT
         push WS_OVERLAPPEDWINDOW OR WS_VISIBLE  ; dwStyle
         push [ebp + lpszTitle]
         push [ebp + lpszClassName]
         push eax                                ; dwExStyle = 0
         call dword ptr[ebp + fn_CreateWindowExA]
 
-        test eax, eax                           ; cmp eax, 0
-        je WinMainRet
+        test eax, eax                           ; was return value NULL?
+        je WinMainRet                           ; if so CreateWindowExA failed, exit
         mov [ebp + hWnd], eax
         push eax
         call dword ptr[ebp + fn_UpdateWindow]
@@ -373,7 +376,7 @@ MessageLoop:
         push eax
         call dword ptr[ebp + fn_GetMessageA]
 
-        test eax, eax                           ; cmp eax, 0
+        test eax, eax                           ; was return value WM_QUIT?
         je DoneMessages                         ; if result was 0, we're done
 
         lea eax, [ebp - sp_MSG]
