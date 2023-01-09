@@ -160,20 +160,6 @@ find_function_finished:
         sub edi, 0fffffffch                     ; increase edi by 4 (size of dword), and avoid nullbytes
         ret
 
-; An egghunter is a small bit of code, that we can use to brute-force search the stack for a given value: DAVEDAVE
-egghunter:
-        mov edi, ebp                            ; Our current ebp, which is not pointing correctly
-        mov eax, txt_DAVE
-find_egg:
-        inc edi                                 ; increase address by 1
-        cmp dword ptr ds:[edi], eax             ; check for "DAVE"
-        jne find_egg                            ; loop if not found
-        cmp dword ptr ds:[edi + 4], eax         ; check for "DAVE" again
-        jne find_egg                            ; loop if not found
-matched:
-        lea ebx, [edi - sp_egg]                 ; return the adjusted place we found
-        ret
-
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
 ; example: https://medium.com/asecuritysite-when-bob-met-alice/ror13-and-its-linkage-to-api-calls-within-modules-c2191b35161d
 resolve_symbols_kernel32:
@@ -417,7 +403,21 @@ WinMainRet:
 ;
 
 WndProc:
-        call egghunter                          ; ebp is incorrect at this point. We call our egghunter function to reposition it, and place it into ebx
+
+; ebp is incorrect at this point. We call our egghunter function to reposition it, and place it into ebx
+; An egghunter is a small bit of code, that we can use to brute-force search the stack for a given value: DAVEDAVE
+egghunter:
+        mov edi, ebp                            ; Our current ebp, which is not pointing correctly
+        mov eax, txt_DAVE
+find_egg:
+        inc edi                                 ; increase address by 1
+        cmp dword ptr ds:[edi], eax             ; check for "DAVE"
+        jne find_egg                            ; loop if not found
+        cmp dword ptr ds:[edi + 4], eax         ; check for "DAVE" again
+        jne find_egg                            ; loop if not found
+matched:
+        lea ebx, [edi - sp_egg]                 ; return the adjusted place we found
+
         enter sp_WndProc, 0                     ; use stdcall, setup a new stack frame of 84 bytes
 
         cmp dword ptr[ebp + WP_uMsg], WM_DESTROY
