@@ -160,24 +160,11 @@ find_function_finished:
         sub edi, 0fffffffch                     ; increase edi by 4 (size of dword), and avoid nullbytes
         ret
 
-; An egghunter is a small bit of code, that we can use to brute-force search the stack for a given value: DAVEDAVE
-egghunter:
-        mov edi, ebp                            ; Our current ebp, which is not pointing correctly
-        mov eax, txt_DAVE
-find_egg:
-        inc edi                                 ; increase address by 1
-        cmp dword ptr ds:[edi], eax             ; check for "DAVE"
-        jne find_egg                            ; loop if not found
-        cmp dword ptr ds:[edi + 4], eax         ; check for "DAVE" again
-        jne find_egg                            ; loop if not found
-matched:
-        lea ebx, [edi - sp_egg]                 ; return the adjusted place we found
-        ret
-
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
 ; example: https://medium.com/asecuritysite-when-bob-met-alice/ror13-and-its-linkage-to-api-calls-within-modules-c2191b35161d
 resolve_symbols_kernel32:
-        mov edi, 10h                             ; edi will be used as an index to where on ebp the function address will be stored
+        push 10h
+        pop edi                                 ; edi will be used as an index to where on ebp the function address will be stored 
 
         push hash_LoadLibraryA
         call find_function
@@ -202,7 +189,7 @@ load_user32:                                    ; Push "user32.dll" onto the sta
         call dword ptr[ebp + fn_LoadLibraryA]
 
 resolve_symbols_user32:
-        mov ebx, eax                            ; Load the base address of user32.dll into ebx
+        xchg ebx, eax                           ; Load the base address of user32.dll into ebx
 
         push hash_LoadIconA
         call find_function
@@ -254,7 +241,7 @@ load_gdi32:                                     ; push "gdi32.dll" onto the stac
         call dword ptr[ebp + fn_LoadLibraryA]
 
 resolve_symbols_gdi32:
-        mov ebx, eax                            ; ebx = base address of gdi32.dll
+        xchg ebx, eax                           ; ebx = base address of gdi32.dll
 
         push hash_SetBkMode
         call find_function
@@ -278,16 +265,14 @@ MainEntry:
         add esp,sp_inv_STARTUPINFOA             ; Setting up stack for STARTUPINFOA structure
         push esp                                ; Pointer to struct
         call dword ptr[ebp + fn_GetStartupInfoA]
-        lea eax, (STARTUPINFOA ptr[esp]).wShowWindow
-        mov ecx, 1
-        test eax, ecx                           ; Find out if wShowWindow should be used
-        jz @1
-        lea eax, (STARTUPINFOA ptr[esp]).dwFlags
-        push ax	                                ; If the show window flag bit was nonzero, we use wShowWindow
-        jmp @2
-@1:
-        push 0ah                                ; Use the default
+
+        mov eax, (STARTUPINFOA ptr[esp]).dwFlags; Find out if wShowWindow should be used
+        and eax, 1                              ; check if STARTF_USESHOWWINDOW flag set, and clear rest of eax
+        mov al, 0ah                             ; Use the default (SW_SHOWDEFAULT)
+        jz @2                                   ; jump if no flag
+        lea eax, (STARTUPINFOA ptr[esp]).wShowWindow ; If the show window flag bit was nonzero, use wShowWindow
 @2:
+        push eax
         sub esp,sp_inv_STARTUPINFOA             ; Clean up stack
         push [ebp + lpszCommandLine]
         push 0                                  ; null
@@ -338,8 +323,7 @@ WinMain:
         push OFFSET WndProc
         push CS_HREDRAW OR CS_VREDRAW           ; style
         push SIZEOF WNDCLASSEXA                 ; cbSize
-        lea eax, [esp]
-        push eax
+        push esp                                ; ptr to WNDCLASSEXA structure
         call dword ptr[ebp + fn_RegisterClassExA]
 
         ; Setting up stack and calling CreateWindowExA
@@ -350,16 +334,21 @@ WinMain:
         push eax                                ; hWndParent = null
         push 480                                ; nHeight
         push 640                                ; nWidth
-        push CW_USEDEFAULT                      ; y
-        push CW_USEDEFAULT                      ; x
+        cdq                                     ; edx = 0
+        stc                                     ; set carry flag = 1
+        rcr edx, 1                              ; rotate carry flag into most sig bit of edx
+                                                ; edx is now equal to CW_USEDEFAULT (0x80000000)
+                                                ; (this saves 4 bytes over push CW_USEDEFAULT)
+        push edx                                ; y = CW_USEDEFAULT
+        push edx                                ; x = CW_USEDEFAULT
         push WS_OVERLAPPEDWINDOW OR WS_VISIBLE  ; dwStyle
         push [ebp + lpszTitle]
         push [ebp + lpszClassName]
         push eax                                ; dwExStyle = 0
         call dword ptr[ebp + fn_CreateWindowExA]
 
-        test eax, eax                           ; cmp eax, 0
-        je WinMainRet
+        test eax, eax                           ; was return value NULL?
+        je WinMainRet                           ; if so CreateWindowExA failed, exit
         mov [ebp + hWnd], eax
         push eax
         call dword ptr[ebp + fn_UpdateWindow]
@@ -373,7 +362,7 @@ MessageLoop:
         push eax
         call dword ptr[ebp + fn_GetMessageA]
 
-        test eax, eax                           ; cmp eax, 0
+        test eax, eax                           ; was return value WM_QUIT?
         je DoneMessages                         ; if result was 0, we're done
 
         lea eax, [ebp - sp_MSG]
@@ -414,7 +403,21 @@ WinMainRet:
 ;
 
 WndProc:
-        call egghunter                          ; ebp is incorrect at this point. We call our egghunter function to reposition it, and place it into ebx
+
+; ebp is incorrect at this point. We call our egghunter function to reposition it, and place it into ebx
+; An egghunter is a small bit of code, that we can use to brute-force search the stack for a given value: DAVEDAVE
+egghunter:
+        mov edi, ebp                            ; Our current ebp, which is not pointing correctly
+        mov eax, txt_DAVE
+find_egg:
+        inc edi                                 ; increase address by 1
+        cmp dword ptr ds:[edi], eax             ; check for "DAVE"
+        jne find_egg                            ; loop if not found
+        cmp dword ptr ds:[edi + 4], eax         ; check for "DAVE" again
+        jne find_egg                            ; loop if not found
+matched:
+        lea ebx, [edi - sp_egg]                 ; return the adjusted place we found
+
         enter sp_WndProc, 0                     ; use stdcall, setup a new stack frame of 84 bytes
 
         cmp dword ptr[ebp + WP_uMsg], WM_DESTROY
@@ -422,9 +425,7 @@ WndProc:
 
         push 0
         call dword ptr[ebx + fn_PostQuitMessage]
-        xor eax, eax
-        leave                                   ; this cleans up our 4 arguments.
-        ret 10h                                 ; We have to specify this, since the compiler won't do it for us.
+        jmp short WndProcRet0
 
 NotWMDestroy:
         cmp dword ptr[ebp + WP_uMsg], WM_PAINT
@@ -458,7 +459,9 @@ NotWMDestroy:
         push [ebp + WP_hWnd]
         call dword ptr[ebx + fn_EndPaint]
 
-        xor eax, eax                            ; return code
+WndProcRet0:
+        xor eax, eax                            ; return code 0
+WndProcRet:
         leave                                   ; this cleans up our 4 arguments.
         ret 10h                                 ; We have to specify this, since the compiler won't do it for us.
 
@@ -468,7 +471,6 @@ NotWMPaint:
         push [ebp + WP_uMsg]
         push [ebp + WP_hWnd]
         call dword ptr[ebx + fn_DefWindowProcA]
-        leave
-        ret 10h                                 ; this cleans up our 4 arguments, but causes null bytes. Should be fixed
+        jmp short WndProcRet                    ; this cleans up our 4 arguments, but causes null bytes. Should be fixed
 
 END start                                       ; Specify entry point, else _WinMainCRTStartup is assumed
