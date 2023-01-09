@@ -53,8 +53,8 @@
 
 ; How to build:
 ;
-; ml /c /coff LittleWindows.asm
-; link /merge:.rdata=.text /merge:.data=.text /align:16 /subsystem:windows LittleWindows.obj
+; ml /coff LittleWindows.asm /link /merge:.rdata=.text /merge:.data=.text /align:4 /subsystem:windows
+;
 
 ; Compiler directives and includes
 
@@ -92,9 +92,9 @@ start endp
 
 ; find the base address of kernel32 using the "PEB method": https://www.offensive-security.com/awe/AWEPAPERS/Skypher.pdf
 find_kernel32:
-        xor ecx, ecx                            ; ecx = 0
+        cdq                                     ; edx = 0
         ASSUME FS:NOTHING                       ; ml.exe doesn't like that we use the fs register, so we need to tell it to stop caring.
-        mov esi, fs:[ecx + hdr_PEB]             ; Pointer to PEB
+        mov esi, fs:[hdr_PEB]                   ; Pointer to PEB
         ASSUME FS:ERROR
         mov esi, [esi + PEB_LDR]                ; PEB->LDR
         mov esi, [esi + LDR_InInitOrder]        ; PEB->LDR->InInitOrder (a linked list)
@@ -104,61 +104,8 @@ next_module:
         mov ebx, [esi + IIO_base_address]       ; InInitOrder[X].base_address
         mov edi, [esi + IIO_module_name]        ; InInitOrder[X].module_name (unicode)
         mov esi, [esi]                          ; InInitOrder[X].flink (next module)
-        cmp [edi + 12 * 2], cx                  ; check if 12th char is \0
+        cmp [edi + 12 * 2], dx                  ; check if 12th char is \0
         jne next_module                         ; try next module
-        jmp resolve_symbols_kernel32
-
-find_function:                                  ; ebx = base address of the dll we are trying to find functions from
-        pushad                                  ; push all the register onto the stack for safekeeping
-        mov eax, [ebx + hdr_PE]                 ; ebx + 0x3c = Offset to PE Signature
-        mov edi, [ebx + eax + PE_ETD]           ; edi = Export Table Directory RVA
-        add edi, ebx                            ; edi = Export Table Directory VMA
-        mov ecx, [edi + ETD_NumberOfNames]      ; ecx = Number of names (The number of functions in the dll)
-        mov eax, [edi + ETD_AddressOfNames]     ; eax = AddressOfNames RVA
-        add eax, ebx                            ; eax = AddressOfNames VMA
-        mov [ebp - lpAddressOfNames], eax
-
-find_function_loop:
-        jecxz find_function_finished            ; If ecx is zero, jump to find_function_finished
-        dec ecx                                 ; decrement ecx
-        mov eax, [ebp - lpAddressOfNames]
-        mov esi, [eax + ecx * 4]                ; ESI = RVA of the next function
-        add esi, ebx                            ; ESI = VMA of the next function
-
-; We start by hashing the function name
-compute_hash:
-        xor eax, eax
-        cdq                                     ; edx = 0
-        cld                                     ; clear direction flag
-
-compute_hash_again:
-        lodsb                                   ; Load next byte from ESI into AL
-        test al, al                             ; Check if AL is zero (null terminator)
-        jz find_function_compare                ; if zero, then we finished hashing and we will compare the hashes
-        ror edx, 13                             ; Rotate edx by 13 bits to the right
-        add edx, eax                            ; setup the next byte
-        jmp compute_hash_again                  ; loop
-
-compute_hash_finished:
-
-; Once the function name is hashed, we can compare it to the hashed function name we are looking for
-find_function_compare:
-        cmp edx, [esp + 24h]                    ; Compare the hash with the computed hash
-        jnz find_function_loop                  ; If not equal, get the next function
-        mov edx, [edi + ETD_AONOrdinals]        ; edx = AddressOfNameOrdinals RVA
-        add edx, ebx                            ; edx = AddressOfNameOrdinals VMA
-        mov cx, [edx + 2 * ecx]                 ; Get the function's ordinal
-        mov edx, [edi + ETD_AddressOfFunctions] ; edx = AddressOfFunctions RVA
-        add edx, ebx                            ; edx = AddressOfFunctions VMA
-        mov eax, [edx + 4 * ecx]                ; eax = Function RVA
-        add eax, ebx                            ; eax = Function VMA (Base address of function)
-        mov [esp + sp_EAX], eax                 ; Overwrite the stack value of EAX, so this value is not lost when popad is used
-
-find_function_finished:
-        popad                                   ; restore all the registers again
-        mov [ebp + edi], eax                    ; save the funtion address in our table
-        sub edi, 0fffffffch                     ; increase edi by 4 (size of dword), and avoid nullbytes
-        ret
 
 ; we use the ror13 hash for the name of the API functions to not push the whole string of the api onto the stack,
 ; example: https://medium.com/asecuritysite-when-bob-met-alice/ror13-and-its-linkage-to-api-calls-within-modules-c2191b35161d
@@ -166,20 +113,14 @@ resolve_symbols_kernel32:
         push 10h
         pop edi                                 ; edi will be used as an index to where on ebp the function address will be stored 
 
-        push hash_LoadLibraryA
+        push 5                                  ; ecx loop counter = length of sym_k32
+        pop ecx                                 ; (using push imm8/pop is 2 bytes shorter than mov ecx, imm32)
+        mov esi, offset sym_k32
+find_all_k32:
+        lodsd                                   ; eax = next symbol hash in table
+        push eax                                ; push to stack for call
         call find_function
-
-        push hash_ExitProcess
-        call find_function
-
-        push hash_GetModuleHandleA
-        call find_function
-
-        push hash_GetCommandLineA
-        call find_function
-
-        push hash_GetStartupInfoA
-        call find_function
+        loop find_all_k32
 
 load_user32:                                    ; Push "user32.dll" onto the stack in reverse order
         push txt_ll
@@ -191,47 +132,13 @@ load_user32:                                    ; Push "user32.dll" onto the sta
 resolve_symbols_user32:
         xchg ebx, eax                           ; Load the base address of user32.dll into ebx
 
-        push hash_LoadIconA
+        push 14                                 ; ecx loop counter = length of sym_u32
+        pop ecx                                 ; esi already pointing at first sym_u32 from find_all_k32 operation
+find_all_u32:
+        lodsd                                   ; eax = next symbol hash in table
+        push eax
         call find_function
-
-        push hash_LoadCursorA
-        call find_function
-
-        push hash_RegisterClassExA
-        call find_function
-
-        push hash_CreateWindowExA
-        call find_function
-
-        push hash_UpdateWindow
-        call find_function
-
-        push hash_GetMessageA
-        call find_function
-
-        push hash_TranslateMessage
-        call find_function
-
-        push hash_DispatchMessageA
-        call find_function
-
-        push hash_PostQuitMessage
-        call find_function
-
-        push hash_BeginPaint
-        call find_function
-
-        push hash_GetClientRect
-        call find_function
-
-        push hash_DrawTextA
-        call find_function
-
-        push hash_EndPaint
-        call find_function
-
-        push hash_DefWindowProcA
-        call find_function
+        loop find_all_u32
 
 load_gdi32:                                     ; push "gdi32.dll" onto the stack in reverse order
         push txt_l
@@ -262,7 +169,7 @@ MainEntry:
         mov [ebp + lpszCommandLine], eax
 
         ; GetStartupInfoA
-        add esp,sp_inv_STARTUPINFOA             ; Setting up stack for STARTUPINFOA structure
+        add esp, sp_inv_STARTUPINFOA            ; Setting up stack for STARTUPINFOA structure
         push esp                                ; Pointer to struct
         call dword ptr[ebp + fn_GetStartupInfoA]
 
@@ -273,7 +180,7 @@ MainEntry:
         lea eax, (STARTUPINFOA ptr[esp]).wShowWindow ; If the show window flag bit was nonzero, use wShowWindow
 @2:
         push eax
-        sub esp,sp_inv_STARTUPINFOA             ; Clean up stack
+        sub esp, sp_inv_STARTUPINFOA            ; Clean up stack
         push [ebp + lpszCommandLine]
         push 0                                  ; null
         push [ebp + hInstance]
@@ -292,7 +199,7 @@ WinMain:
 
         ; LoadCursorA
         push IDC_ARROW                          ; Use the default cursor
-        push 0	                                ; null
+        push 0                                  ; null
         call dword ptr[ebp + fn_LoadCursorA]
         mov [ebp + hCursor], eax
 
@@ -472,5 +379,63 @@ NotWMPaint:
         push [ebp + WP_hWnd]
         call dword ptr[ebx + fn_DefWindowProcA]
         jmp short WndProcRet                    ; this cleans up our 4 arguments, but causes null bytes. Should be fixed
+
+find_function:                                  ; ebx = base address of the dll we are trying to find functions from
+        pushad                                  ; push all the register onto the stack for safekeeping
+        mov eax, [ebx + hdr_PE]                 ; ebx + 0x3c = Offset to PE Signature
+        mov edi, [ebx + eax + PE_ETD]           ; edi = Export Table Directory RVA
+        add edi, ebx                            ; edi = Export Table Directory VMA
+        mov ecx, [edi + ETD_NumberOfNames]      ; ecx = Number of names (The number of functions in the dll)
+        mov eax, [edi + ETD_AddressOfNames]     ; eax = AddressOfNames RVA
+        add eax, ebx                            ; eax = AddressOfNames VMA
+        mov [ebp - lpAddressOfNames], eax
+
+find_function_loop:
+        jecxz find_function_finished            ; If ecx is zero, jump to find_function_finished
+        dec ecx                                 ; decrement ecx
+        mov eax, [ebp - lpAddressOfNames]
+        mov esi, [eax + ecx * 4]                ; ESI = RVA of the next function
+        add esi, ebx                            ; ESI = VMA of the next function
+
+; We start by hashing the function name
+compute_hash:
+        xor eax, eax
+        cdq                                     ; edx = 0
+        cld                                     ; clear direction flag
+
+compute_hash_again:
+        lodsb                                   ; Load next byte from ESI into AL
+        test al, al                             ; Check if AL is zero (null terminator)
+        jz find_function_compare                ; if zero, then we finished hashing and we will compare the hashes
+        ror edx, 13                             ; Rotate edx by 13 bits to the right
+        add edx, eax                            ; setup the next byte
+        jmp compute_hash_again                  ; loop
+
+compute_hash_finished:
+
+; Once the function name is hashed, we can compare it to the hashed function name we are looking for
+find_function_compare:
+        cmp edx, [esp + 24h]                    ; Compare the hash with the computed hash
+        jnz find_function_loop                  ; If not equal, get the next function
+        mov edx, [edi + ETD_AONOrdinals]        ; edx = AddressOfNameOrdinals RVA
+        add edx, ebx                            ; edx = AddressOfNameOrdinals VMA
+        mov cx, [edx + 2 * ecx]                 ; Get the function's ordinal
+        mov edx, [edi + ETD_AddressOfFunctions] ; edx = AddressOfFunctions RVA
+        add edx, ebx                            ; edx = AddressOfFunctions VMA
+        mov eax, [edx + 4 * ecx]                ; eax = Function RVA
+        add eax, ebx                            ; eax = Function VMA (Base address of function)
+        mov [esp + sp_EAX], eax                 ; Overwrite the stack value of EAX, so this value is not lost when popad is used
+
+find_function_finished:
+        popad                                   ; restore all the registers again
+        mov [ebp + edi], eax                    ; save the funtion address in our table
+        sub edi, 0fffffffch                     ; increase edi by 4 (size of dword), and avoid nullbytes
+        ret
+
+; tables of function hashes to find
+sym_k32 dd hash_LoadLibraryA, hash_ExitProcess, hash_GetModuleHandleA, hash_GetCommandLineA, hash_GetStartupInfoA
+sym_u32 dd hash_LoadIconA, hash_LoadCursorA, hash_RegisterClassExA, hash_CreateWindowExA, hash_UpdateWindow
+        dd hash_GetMessageA, hash_TranslateMessage, hash_DispatchMessageA, hash_PostQuitMessage, hash_BeginPaint
+        dd hash_GetClientRect, hash_DrawTextA, hash_EndPaint, hash_DefWindowProcA
 
 END start                                       ; Specify entry point, else _WinMainCRTStartup is assumed
