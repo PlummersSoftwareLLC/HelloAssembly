@@ -88,6 +88,9 @@ After installing it, the build instructions for both applications are:
 
 ## Current sizes
 
-Current smallest known working executable size as of 1/9/2023 is 644 bytes. This is achieved using Crinkler with the original code in the TinyOriginal directory.
+Current smallest known working executable sizes as of 01/10/2023 are as follows:
 
-The smallest executable with plain MASM32 is 1188 bytes in size, and a build of the current code in the Lasse directory.
+| Program | Plain MASM32 | With Crinkler |
+|-|-:|-:|
+| `Lasse\LittleWindows.asm` | 1104 | 824 |
+| `TinyOriginal\Tiny.asm` | 3584 | 644 |
