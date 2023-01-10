@@ -88,7 +88,7 @@ After installing it, the build instructions for both applications are:
 
 ## Current sizes
 
-Current smallest known working executable sizes as of 1/9/2023 are as follows:
+Current smallest known working executable sizes as of 01/10/2023 are as follows:
 
 | Program | Plain MASM32 | With Crinkler |
 |-|-:|-:|
