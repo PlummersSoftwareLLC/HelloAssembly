@@ -74,14 +74,14 @@ After installing it, the build instructions for both applications are:
   crinkler.exe /ENTRY:MainEntry /SUBSYSTEM:WINDOWS /TINYHEADER /NOINITIALIZERS /UNSAFEIMPORT /ORDERTRIES:2000 /TINYIMPORT /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.20348.0\um\x86" kernel32.lib user32.lib gdi32.lib Tiny.obj /OUT:tiny.exe
   ```
 
-  The executable will be named out.exe.
+  The executable will be named tiny.exe.
 
 ## Current sizes
 
-Current smallest known working executable sizes as of 01/10/2023 are as follows:
+Current smallest known working executable sizes as of 01/11/2023 are as follows:
 
 | Program | Linker | Size in bytes |
 |-|-|-:|
 | `Lasse\LittleWindows.asm` | MASM32 | 1104 |
-| `Lasse\LittleWindows.asm` | Crinkler | 824 |
-| `TinyOriginal\Tiny.asm` | Crinkler | 610 |
+| `Lasse\LittleWindows.asm` | Crinkler | 818 |
+| `TinyOriginal\Tiny.asm` | Crinkler | 596 |

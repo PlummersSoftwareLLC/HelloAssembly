@@ -15,18 +15,18 @@ include user32.inc		; Windows, controls, etc
 include kernel32.inc		; Handles, modules, paths, etc
 include gdi32.inc		; Drawing into a device context (ie: painting)
 
-; Libs - information needed to link ou binary to the system DLL callss
+; Libs - information needed to link our binary to the system DLL calls
 
 
-; Constants and Datra
+; Constants and Data
 
 WindowWidth	equ 640				         ; How big we'd like our main window
 WindowHeight	equ 480
 
 .DATA
 
-ClassName    	db "X", 0              	                 ; The name of our Window class
-AppName		db "Dave's Tiny App", 0		         ; The name of our main window
+ClassName label byte					; The name of our Window class (same as main window)
+AppName		db "Dave's Tiny App", 0		        ; The name of our main window
 
 ;-------------------------------------------------------------------------------------------------------------------
 .CODE							; Here is where the program itself lives
@@ -50,13 +50,11 @@ MainEntry proc NEAR
 	lea	eax, sui			        ; Get the STARTUPINFO for this process
 	push	eax
 	call	GetStartupInfoA			        ; Find out if wShowWindow should be used
-	test	sui.dwFlags, STARTF_USESHOWWINDOW   
-	jz	@1
-	push	sui.wShowWindow			        ; If the show window flag bit was nonzero, we use wShowWindow
-	jmp	@2
+	test	byte ptr sui.dwFlags, STARTF_USESHOWWINDOW
+	jnz	@1
+	mov	byte ptr sui.wShowWindow, SW_SHOWDEFAULT ; Use the default 
 @1:
-	push	SW_SHOWDEFAULT			        ; Use the default 
-@2:	
+	push	sui.wShowWindow		      		; If the show window flag bit was nonzero, we use wShowWindow
 
 	mov	wc.cbSize, SIZEOF WNDCLASSEX		; Fill in the values in the members of our windowclass
 	mov	wc.style, CS_HREDRAW or CS_VREDRAW	; Redraw if resized in either dimension
@@ -89,7 +87,7 @@ MainEntry proc NEAR
 	push	OFFSET ClassName			; The window class name of what we're creating
 	push	0					; Extended style bits, if any
 	call 	CreateWindowExA
-	cmp	eax, NULL
+	test	eax, eax
 	je	MainRet				        ; Fail and bail on NULL handle returned
 	mov	hwnd, eax				; Window handle is the result, returned in eax
 
@@ -105,7 +103,7 @@ MessageLoop:
 	push	eax
 	call	GetMessage				; Get a message from the application's message queue
 
-	cmp	eax, 0					; When GetMessage returns 0, it's time to exit
+	test	eax, eax				; When GetMessage returns 0, it's time to exit
 	je	DoneMessages
 
 	lea	eax, msg				; Translate 'msg'
