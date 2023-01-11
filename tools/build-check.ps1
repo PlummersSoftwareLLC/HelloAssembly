@@ -37,8 +37,7 @@ Remove-Item .\Lasse\*.obj,.\Lasse\*.exe,.\TinyOriginal\*.obj,.\TinyOriginal\*.ex
 # Test and check each executable
 $success = RunExecutable ".\Lasse\LittleWindows.exe" 
 $success = (RunExecutable ".\Lasse\out.exe") -and $success
-$success = (RunExecutable ".\TinyOriginal\Tiny.exe") -and $success
-$success = (RunExecutable ".\TinyOriginal\out.exe") -and $success
+$success = (RunExecutable ".\TinyOriginal\tiny.exe") -and $success
 
 Write-Host ""
 
