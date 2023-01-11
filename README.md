@@ -42,23 +42,13 @@ If your virus scanner intervenes when you try to run the executables that come o
 
 ### Plain MASM32
 
-The applications can be built with plain MASM32 11.0, which can be obtained from a number of sources. Build instructions using it are:
+The current code in the Lasse directory can be built with plain MASM32 11.0, which can be obtained from a number of sources. Build instructions using it are:
 
-- Current code in the Lasse directory:
-  
-  ```shell
-  ml /coff LittleWindows.asm /link /merge:.rdata=.text /merge:.data=.text /align:16 /subsystem:windows LittleWindows.obj
-  ```
+```shell
+ml /coff LittleWindows.asm /link /merge:.rdata=.text /merge:.data=.text /align:4 /subsystem:windows LittleWindows.obj
+```
 
-  The executable will be named LittleWindows.exe.
-
-- Original code in the TinyOriginal directory:
-
-  ```shell
-  ml /coff /I c:\masm32\include Tiny.asm /link /libpath:c:\masm32\lib /subsystem:windows
-  ```
-
-  The executable will be named Tiny.exe.
+The executable will be named LittleWindows.exe.
 
 ### MASM32 with Crinkler
 
@@ -80,14 +70,18 @@ After installing it, the build instructions for both applications are:
 - Original code in the TinyOriginal directory:
 
   ```shell
-  ml /c /coff /IC:\masm32\include .\Tiny.asm 
-  crinkler.exe /NODEFAULTLIB /ENTRY:MainEntry /SUBSYSTEM:WINDOWS /TINYHEADER /NOINITIALIZERS /UNSAFEIMPORT /ORDERTRIES:1000 /TINYIMPORT /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.20348.0\um\x86" kernel32.lib user32.lib gdi32.lib Tiny.obj
+  ml /c /coff /IC:\masm32\include Tiny.asm 
+  crinkler.exe /ENTRY:MainEntry /SUBSYSTEM:WINDOWS /TINYHEADER /NOINITIALIZERS /UNSAFEIMPORT /ORDERTRIES:2000 /TINYIMPORT /LIBPATH:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.20348.0\um\x86" kernel32.lib user32.lib gdi32.lib Tiny.obj /OUT:tiny.exe
   ```
 
-  The executable will be named out.exe.
+  The executable will be named tiny.exe.
 
 ## Current sizes
 
-Current smallest known working executable size as of 1/3/2023 is 644 bytes. This is achieved using Crinkler with the original code in the TinyOriginal directory.
+Current smallest known working executable sizes as of 01/11/2023 are as follows:
 
-The smallest executable with plain MASM32 is 1248 bytes in size, and a build of the current code in the Lasse directory.
+| Program | Linker | Size in bytes |
+|-|-|-:|
+| `Lasse\LittleWindows.asm` | MASM32 | 1104 |
+| `Lasse\LittleWindows.asm` | Crinkler | 818 |
+| `TinyOriginal\Tiny.asm` | Crinkler | 596 |

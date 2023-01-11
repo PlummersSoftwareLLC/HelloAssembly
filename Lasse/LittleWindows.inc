@@ -120,12 +120,12 @@ txt_Dave_               equ 065766144h      ; Dave
 ; Stack offsets
 ;
 
-sp_inv_main             equ 0ffffff10h      ; -240
+sp_main                 equ 240
 sp_egg                  equ 008h
 sp_EAX                  equ 01ch
 sp_inv_STARTUPINFOA     equ 0ffffffbch      ; -68
 sp_MSG                  equ 01ch
-sp_inv_WndProc          equ 0ffffffach      ; -84
+sp_WndProc              equ 84
 
 ; ---------------------------------------------------
 ;
