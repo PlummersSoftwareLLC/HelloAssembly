@@ -15,7 +15,7 @@ include user32.inc		; Windows, controls, etc
 include kernel32.inc		; Handles, modules, paths, etc
 include gdi32.inc		; Drawing into a device context (ie: painting)
 
-; Libs - information needed to link ou binary to the system DLL callss
+; Libs - information needed to link our binary to the system DLL calls
 
 
 ; Constants and Datra
@@ -50,13 +50,11 @@ MainEntry proc NEAR
 	lea	eax, sui			        ; Get the STARTUPINFO for this process
 	push	eax
 	call	GetStartupInfoA			        ; Find out if wShowWindow should be used
-	test	byte ptr sui.dwFlags, STARTF_USESHOWWINDOW   
-	jz	@1
-	push	sui.wShowWindow			        ; If the show window flag bit was nonzero, we use wShowWindow
-	jmp	@2
+	test	byte ptr sui.dwFlags, STARTF_USESHOWWINDOW
+	jnz	@1
+	mov	byte ptr sui.wShowWindow, SW_SHOWDEFAULT ; Use the default 
 @1:
-	push	SW_SHOWDEFAULT			        ; Use the default 
-@2:	
+	push	sui.wShowWindow		      		; If the show window flag bit was nonzero, we use wShowWindow
 
 	mov	wc.cbSize, SIZEOF WNDCLASSEX		; Fill in the values in the members of our windowclass
 	mov	wc.style, CS_HREDRAW or CS_VREDRAW	; Redraw if resized in either dimension
