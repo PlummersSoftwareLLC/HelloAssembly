@@ -78,10 +78,10 @@ After installing it, the build instructions for both applications are:
 
 ## Current sizes
 
-Current smallest known working executable sizes as of 01/10/2023 are as follows:
+Current smallest known working executable sizes as of 01/11/2023 are as follows:
 
 | Program | Linker | Size in bytes |
 |-|-|-:|
 | `Lasse\LittleWindows.asm` | MASM32 | 1104 |
 | `Lasse\LittleWindows.asm` | Crinkler | 824 |
-| `TinyOriginal\Tiny.asm` | Crinkler | 610 |
+| `TinyOriginal\Tiny.asm` | Crinkler | 607 |
