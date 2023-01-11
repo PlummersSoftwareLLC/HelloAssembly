@@ -18,15 +18,15 @@ include gdi32.inc		; Drawing into a device context (ie: painting)
 ; Libs - information needed to link our binary to the system DLL calls
 
 
-; Constants and Datra
+; Constants and Data
 
 WindowWidth	equ 640				         ; How big we'd like our main window
 WindowHeight	equ 480
 
 .DATA
 
-ClassName    	db "X", 0              	                 ; The name of our Window class
-AppName		db "Dave's Tiny App", 0		         ; The name of our main window
+ClassName label byte					; The name of our Window class (same as main window)
+AppName		db "Dave's Tiny App", 0		        ; The name of our main window
 
 ;-------------------------------------------------------------------------------------------------------------------
 .CODE							; Here is where the program itself lives
