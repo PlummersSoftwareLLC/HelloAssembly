@@ -50,7 +50,7 @@ MainEntry proc NEAR
 	lea	eax, sui			        ; Get the STARTUPINFO for this process
 	push	eax
 	call	GetStartupInfoA			        ; Find out if wShowWindow should be used
-	test	sui.dwFlags, STARTF_USESHOWWINDOW   
+	test	byte ptr sui.dwFlags, STARTF_USESHOWWINDOW   
 	jz	@1
 	push	sui.wShowWindow			        ; If the show window flag bit was nonzero, we use wShowWindow
 	jmp	@2
@@ -89,7 +89,7 @@ MainEntry proc NEAR
 	push	OFFSET ClassName			; The window class name of what we're creating
 	push	0					; Extended style bits, if any
 	call 	CreateWindowExA
-	cmp	eax, NULL
+	test	eax, eax
 	je	MainRet				        ; Fail and bail on NULL handle returned
 	mov	hwnd, eax				; Window handle is the result, returned in eax
 
@@ -105,7 +105,7 @@ MessageLoop:
 	push	eax
 	call	GetMessage				; Get a message from the application's message queue
 
-	cmp	eax, 0					; When GetMessage returns 0, it's time to exit
+	test	eax, eax				; When GetMessage returns 0, it's time to exit
 	je	DoneMessages
 
 	lea	eax, msg				; Translate 'msg'
