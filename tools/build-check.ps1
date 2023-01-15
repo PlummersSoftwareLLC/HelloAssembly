@@ -47,4 +47,5 @@ if ($success) {
     .\tools\update-readme-sizes.ps1
 }
 else {
+    Write-Host "Skipping update of current sizes, as at least one executable failed to run."
 }
