@@ -12,7 +12,7 @@ And the follow-up episode ["C vs ASM: Making the World's SMALLEST Windows App"](
 
 Code in the repository:
 
-- Optimized version of the original code in the folder "TinyOriginal"
+- Optimized version of the original code is in the folder "TinyOriginal"
 - Version applying shell coding tactics is in the folder "Lasse"
 - Version using a manually written PE header is in the folder "Theron"
 - QRCode is dead code, was the exe embedded into a QRCode, kept just for posterity
