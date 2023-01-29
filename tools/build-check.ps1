@@ -29,7 +29,7 @@ Function RunExecutable {
 }
 
 # Clean up any obj and exe files
-Remove-Item .\Lasse\*.obj,.\Lasse\*.exe,.\TinyOriginal\*.obj,.\TinyOriginal\*.exe -ErrorAction Ignore
+Remove-Item .\Lasse\*.obj,.\Lasse\*.exe,.\Theron\*.exe,.\TinyOriginal\*.obj,.\TinyOriginal\*.exe -ErrorAction Ignore
 
 # Build all executables
 .\tools\build-all.ps1
@@ -37,6 +37,7 @@ Remove-Item .\Lasse\*.obj,.\Lasse\*.exe,.\TinyOriginal\*.obj,.\TinyOriginal\*.ex
 # Test and check each executable
 $success = RunExecutable ".\Lasse\LittleWindows.exe" 
 $success = (RunExecutable ".\Lasse\out.exe") -and $success
+$success = (RunExecutable ".\Theron\HelloWindows.exe") -and $success
 $success = (RunExecutable ".\TinyOriginal\tiny.exe") -and $success
 
 Write-Host ""
