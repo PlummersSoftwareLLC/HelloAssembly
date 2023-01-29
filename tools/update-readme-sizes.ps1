@@ -11,7 +11,10 @@ $fileContent = $fileContent -replace '<!--size-date-->', (Get-Date).ToString('MM
 $fileContent = $fileContent -replace '<!--size-little-masm-->', (Get-Item .\Lasse\LittleWindows.exe).Length
 $fileContent = $fileContent -replace '<!--size-little-crinkler-->', (Get-Item .\Lasse\out.exe).Length
 
-# Insert file sizes for TinyOriginal executables 
+# Insert file sizes for Theron executable 
+$fileContent = $fileContent -replace '<!--size-hello-yasm-->', (Get-Item .\Theron\HelloWindows.exe).Length
+
+# Insert file sizes for TinyOriginal executable 
 $fileContent = $fileContent -replace '<!--size-tiny-crinkler-->', (Get-Item .\TinyOriginal\tiny.exe).Length
 
 Set-Content -Value $fileContent -Path '.\README.md'

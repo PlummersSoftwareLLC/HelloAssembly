@@ -12,8 +12,9 @@ And the follow-up episode ["C vs ASM: Making the World's SMALLEST Windows App"](
 
 Code in the repository:
 
-- Current code is in the folder "Lasse"
-- Original code in the folder "TinyOriginal"
+- Optimized version of the original code in the folder "TinyOriginal"
+- Version applying shell coding tactics is in the folder "Lasse"
+- Version using a manually written PE header is in the folder "Theron"
 - QRCode is dead code, was the exe embedded into a QRCode, kept just for posterity
 
 The goal of this project is to make the smallest possible application, without compression, that has the following features:
@@ -42,7 +43,7 @@ If your virus scanner intervenes when you try to run the executables that come o
 
 ### Plain MASM32
 
-The current code in the Lasse directory can be built with plain MASM32 11.0, which can be obtained from a number of sources. Build instructions using it are:
+The code in the Lasse directory can be built with plain MASM32 11.0, which can be obtained from a number of sources. Build instructions using it are:
 
 ```shell
 ml /coff LittleWindows.asm /link /merge:.rdata=.text /merge:.data=.text /align:4 /subsystem:windows LittleWindows.obj
@@ -56,9 +57,9 @@ Crinkler is a compressing linker for Windows, specifically targeted towards exec
 
 Crinkler requires the Windows SDK to be installed. Best (i.e. smallest) results have been achieved with version 10.0.20348.0 of the Windows 10 SDK. It, and other versions can be downloaded from the [Windows SDK archive page](https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/) on the Microsoft website.
 
-After installing it, the build instructions for both applications are:
+After installing it, the build instructions for the applications that can be built using it are:
 
-- Current code in the Lasse directory:
+- Code in the Lasse directory:
 
   ```shell
   ml /c /coff LittleWindows.asm
@@ -67,7 +68,7 @@ After installing it, the build instructions for both applications are:
 
   The executable will be named out.exe.
 
-- Original code in the TinyOriginal directory:
+- Code in the TinyOriginal directory:
 
   ```shell
   ml /c /coff /IC:\masm32\include Tiny.asm 
@@ -76,12 +77,23 @@ After installing it, the build instructions for both applications are:
 
   The executable will be named tiny.exe.
 
+### Yasm
+
+The code in the Theron directory has to be built with Yasm, which is a rewrite of the NASM assembler under the "new" BSD license. It can be acquired from the [Yasm project download page](https://yasm.tortall.net/Download.html); choose the version "for general use". The assembler is assumed to be renamed to `yasm.exe`. Build instructions using it are:
+
+```shell
+yasm -fbin -o HelloWindows.exe HelloWindows.asm
+```
+
+The executable will be named HelloWindows.exe.
+
 ## Current sizes
 
-Current smallest known working executable sizes as of 01/11/2023 are as follows:
+Current smallest known working executable sizes as of 01/29/2023 are as follows:
 
 | Program | Linker | Size in bytes |
 |-|-|-:|
 | `Lasse\LittleWindows.asm` | MASM32 | 1104 |
 | `Lasse\LittleWindows.asm` | Crinkler | 818 |
+| `Theron\HelloWindows.asm` | Yasm | 396 |
 | `TinyOriginal\Tiny.asm` | Crinkler | 596 |
