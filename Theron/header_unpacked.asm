@@ -21,8 +21,6 @@ times %%A-%%B db 0
 times %%B-%%A db 0
 %endmacro
 
-SECTALIGN equ 0x4
-FILEALIGN equ 0x4
 IMGBASE equ 0x400000
 %define RVA(x) ((x)-IMGBASE)
 
@@ -171,7 +169,7 @@ unpacked_entry:
     mov ebx,eax               ; found -> start importing from this module
     add edi,8                 ; go to first hash
     nonextlib:
-    cmp di,importtable_end-0xFFFF ; RVA(importtable_end)<0xFFFF, saves 1 byte
+    cmp di,importtable_end-IMGBASE; RVA(importtable_end)<0xFFFF, saves 1 byte
     jnz importloop            ; more hashes to import
 
     ; END OF HASH LOADER

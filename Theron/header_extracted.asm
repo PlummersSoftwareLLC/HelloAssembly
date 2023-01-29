@@ -21,8 +21,6 @@ times %%A-%%B db 0
 times %%B-%%A db 0
 %endmacro
 
-SECTALIGN equ 0x4
-FILEALIGN equ 0x4
 IMGBASE equ 0x400000
 %define RVA(x) ((x)-IMGBASE)
 
@@ -200,7 +198,7 @@ execpartB:
     mov ebx,eax
     add edi,8
     nonextlib:
-    cmp di,importtable_end-0xFFFF
+    cmp di,importtable_end-IMGBASE
     jnz importloop
 
     ; END OF HASH LOADER
