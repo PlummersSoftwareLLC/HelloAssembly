@@ -200,7 +200,7 @@ execpartB:
     mov ebx,eax
     add edi,8
     nonextlib:
-    cmp di,importtable_end&0xFFFF
+    cmp di,importtable_end-0xFFFF
     jnz importloop
 
     ; END OF HASH LOADER

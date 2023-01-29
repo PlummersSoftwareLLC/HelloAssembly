@@ -171,7 +171,7 @@ unpacked_entry:
     mov ebx,eax               ; found -> start importing from this module
     add edi,8                 ; go to first hash
     nonextlib:
-    cmp di,importtable_end&0xFFFF ; RVA(importtable_end)<0xFFFF, saves 1 byte
+    cmp di,importtable_end-0xFFFF ; RVA(importtable_end)<0xFFFF, saves 1 byte
     jnz importloop            ; more hashes to import
 
     ; END OF HASH LOADER
