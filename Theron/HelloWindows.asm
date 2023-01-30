@@ -7,7 +7,10 @@
 ;   yasm -fbin -o HelloWindows.exe HelloWindows.asm
 ;   yasm -fbin -o HelloCompat.exe HelloWindows.asm -DWINECOMPAT
 ;
-; 2023-01-27  Theron Tarigo   396 bytes with header_tiny v2023-01-27
+; 2023-01-27  396  Theron Tarigo
+;                    First publication
+; 2023-01-29  393  header_tiny 2023-01-29 819efd
+;                    Remove alignment
 ;
 ;-----------------------
 
@@ -167,8 +170,6 @@ relrefstart: ; 256b from here onwards are [ebp+byte] addressable
     jmp REFREL_REG(eax,pfnDefWindowProcA)
 
 AppName: db "Dave's Tiny App",0
-
-  align 4,db 0
 
 ; Import table rules
 ;   Library name must occupy 8 bytes, zero-padded as needed.
