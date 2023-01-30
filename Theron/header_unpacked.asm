@@ -8,7 +8,7 @@
 ; Given N imports and M libraries, the importer pushes O(N*M) items to stack
 ; which are never cleaned up.  This is not anticipated to cause overflow.
 ;
-; 2023-01-27  Theron Tarigo
+; See header_tiny.asm for history.
 ;
 ;-----------------------
 
@@ -161,13 +161,13 @@ unpacked_entry:
     cmp eax,[edi]             ; compare to hash in importtable
     jne searchloop            ; try again
     mov [edi],edx             ; replace hash with resolved address
-    add edi,4                 ; next import
+    scasd                     ; next import (edi+=4)
     push edi                  ; try the next table entry as a library name
     CALLIMPORT LoadLibraryA
     test eax,eax
     jz nonextlib              ; not found => it wasn't a library name at all
     mov ebx,eax               ; found -> start importing from this module
-    add edi,8                 ; go to first hash
+    times 2 scasd             ; go to first hash (edi+=8)
     nonextlib:
     cmp di,importtable_end-IMGBASE; RVA(importtable_end)<0xFFFF, saves 1 byte
     jnz importloop            ; more hashes to import

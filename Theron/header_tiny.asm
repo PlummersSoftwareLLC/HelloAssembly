@@ -8,7 +8,11 @@
 ; Given N imports and M libraries, the importer pushes O(N*M) items to stack
 ; which are never cleaned up.  This is not anticipated to cause overflow.
 ;
-; 2023-01-27  Theron Tarigo   160 bytes header+importer+LoadLibraryA hash
+; Sizes: header+importer+LoadLibraryA hash
+; 2023-01-27  160  Theron Tarigo
+;                    First publication
+; 2023-01-29  157  (from suggestion by qkumba)
+;             (-3)   add edi,4*n -> times n scasd
 ;
 ;-----------------------
 
@@ -126,13 +130,13 @@ execpartB:
     cmp eax,[edi]
     jne searchloop
     mov [edi],edx
-    add edi,4
+    scasd
     push edi
     CALLIMPORT LoadLibraryA
     test eax,eax
     jz nonextlib
     mov ebx,eax
-    add edi,8
+    times 2 scasd
     nonextlib:
     cmp di,importtable_end-IMGBASE
     jnz importloop
