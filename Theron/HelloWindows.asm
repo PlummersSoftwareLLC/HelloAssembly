@@ -11,6 +11,8 @@
 ;                    First publication
 ; 2023-01-29  393  header_tiny 2023-01-29 819efd
 ;                    Remove alignment
+; 2023-01-29  391  Theron Tarigo
+;             (-2)   Use wndproc arg for hWnd
 ;
 ;-----------------------
 
@@ -55,8 +57,6 @@
     ; END ARGS CreateWindowExA
 
     CALLIMPORT CreateWindowExA
-
-    mov REFREL(hwnd),eax
 
     ; ARGS OF  UpdateWindow
     push eax                  ; hWnd
@@ -104,7 +104,7 @@ relrefstart: ; 256b from here onwards are [ebp+byte] addressable
     mov eax,regrelref
     pushad ; regrelref restored to eax upon popad
     mov ebp,eax
-    mov eax,[esp+0x28]
+    mov eax,[esp+0x28] ; uMsg
     cmp eax,0x000F ; WM_PAINT
     ; Handles also WM_SIZE.
     ; Everything below 0x000F is also reasonable time to paint.
@@ -112,7 +112,7 @@ relrefstart: ; 256b from here onwards are [ebp+byte] addressable
     cmp al,0x02 ; 0x0002 = WM_DESTROY
     je quit
 
-    mov ebx,REFREL(hwnd)
+    mov ebx,[esp+0x24] ; hWnd
     lea esi,REFREL(rect)
 
     ; ARGS OF  GetDC
@@ -217,6 +217,5 @@ importtable_end:
 
 section bss nobits vfollows=bin
 
-hwnd: resd 1
 rect: resd 4
 
