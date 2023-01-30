@@ -214,8 +214,6 @@ db "gdi32",0,0,0
 
 importtable_end:
 
-SIZEOFIMAGE equ $-exefile
-
 section bss nobits vfollows=bin
 
 hwnd: resd 1
