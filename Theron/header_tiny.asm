@@ -1,7 +1,8 @@
 ;-----------------------
-; header_unpacked.asm
-; Version of header_tiny.asm without using program code in the header fields;
+; header_tiny.asm
 ; Hand-written PE32 format headers and hash-based function import;
+; Program code is packed into sections of headers which are found to be unused
+; according to various published materials.
 ; Heavily borrowing techniques from Crinkler,
 ;   https://github.com/runestubbe/Crinkler
 ;
