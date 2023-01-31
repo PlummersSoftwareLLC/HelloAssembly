@@ -154,8 +154,8 @@ execpartB:
     dec edi
     nonextlib:
     ; eax=0 unless a module was just loaded
-    cmp eax,[edi] ; if next hash is zero (or by bad luck, coincides module)
-    jne importloop
+    or eax,[edi]
+    jnz importloop
 
     ; END OF HASH LOADER
     ; eax = 0

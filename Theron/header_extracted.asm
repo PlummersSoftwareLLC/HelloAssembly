@@ -197,8 +197,8 @@ execpartB:
     repne scasb
     dec edi
     nonextlib:
-    cmp eax,[edi]
-    jne importloop
+    or eax,[edi]
+    jnz importloop
 
     ; END OF HASH LOADER
     ; eax = 0

@@ -170,8 +170,8 @@ unpacked_entry:
     dec edi                   ; move to null byte (first byte of hash)
     nonextlib:
     ; eax=0 unless a module was just loaded
-    cmp eax,[edi] ; if next hash is zero (or by bad luck, coincides module)
-    jne importloop            ; more hashes to import
+    or eax,[edi]              ; not done if next hash (or module) is nonzero
+    jnz importloop
 
     ; END OF HASH LOADER
     ; eax = 0
