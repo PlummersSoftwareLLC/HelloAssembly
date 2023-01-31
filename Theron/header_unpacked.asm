@@ -164,7 +164,10 @@ unpacked_entry:
     test eax,eax
     jz nonextlib              ; not found => it wasn't a library name at all
     mov ebx,eax               ; found -> start importing from this module
-    times 2 scasd             ; go to first hash (edi+=8)
+    ; module will be page aligned, thus al=0
+    mov cl,0xFF
+    repne scasb               ; scan past end of library name
+    dec edi                   ; move to null byte (first byte of hash)
     nonextlib:
     ; eax=0 unless a module was just loaded
     cmp eax,[edi] ; if next hash is zero (or by bad luck, coincides module)

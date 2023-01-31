@@ -193,7 +193,9 @@ execpartB:
     test eax,eax
     jz nonextlib
     mov ebx,eax
-    times 2 scasd
+    mov cl,0xFF
+    repne scasb
+    dec edi
     nonextlib:
     cmp eax,[edi]
     jne importloop

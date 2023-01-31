@@ -23,6 +23,8 @@
 ;             (-3)   add edi,4*n -> times n scasd
 ; 2023-01-30  154  Theron Tarigo
 ;             (-3)   Test for zero hash as import table end condition
+;             157
+;             (+3)   Scan library name string lengths, no more fixed sizes
 ;
 ;-----------------------
 
@@ -146,7 +148,10 @@ execpartB:
     test eax,eax
     jz nonextlib
     mov ebx,eax
-    times 2 scasd
+    ; module will be page aligned, thus al=0
+    mov cl,0xFF
+    repne scasb
+    dec edi
     nonextlib:
     ; eax=0 unless a module was just loaded
     cmp eax,[edi] ; if next hash is zero (or by bad luck, coincides module)

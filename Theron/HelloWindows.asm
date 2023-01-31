@@ -14,6 +14,8 @@
 ; 2023-01-29  391  Theron Tarigo
 ;             (-2)   Use wndproc arg for hWnd
 ; 2023-01-30  388  (-3 from header_tiny)
+;             386
+;             (-5+3) No more padding in library names, importer now scans
 ;
 ;-----------------------
 
@@ -174,7 +176,7 @@ AppName: db "Dave's Tiny App",0
 
 ; Import table rules
 ;   Table must be followed by end of file, or by 4 null bytes.
-;   Library name must occupy 8 bytes, zero-padded as needed.
+;   Library name must not be padded, and may be any length.
 ;   Each library name must be followed by at least one hash.
 ;     (remember this when debugging)
 
@@ -185,7 +187,7 @@ importtable:
   pfnExitProcess:
     dd 0x32955300
 
-db "user32",0,0
+db "user32"
   pfnCreateWindowExA:
     dd 0xF9C6B200
   pfnSetWindowLongA:
@@ -211,7 +213,7 @@ db "user32",0,0
   pfnDrawTextA:
     dd 0xA18D6B00
 
-db "gdi32",0,0,0
+db "gdi32"
   pfnSetBkMode:
     dd 0xE1789D00
 
