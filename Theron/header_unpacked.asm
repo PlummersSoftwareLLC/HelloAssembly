@@ -5,9 +5,6 @@
 ; Heavily borrowing techniques from Crinkler,
 ;   https://github.com/runestubbe/Crinkler
 ;
-; Given N imports and M libraries, the importer pushes O(N*M) items to stack
-; which are never cleaned up.  This is not anticipated to cause overflow.
-;
 ; See header_tiny.asm for history.
 ;
 ;-----------------------
@@ -41,7 +38,7 @@ pehdr:
   dd 0x90909090                             ; NumberOfSymbols
 
 ASSERTEQ $-pehdr,0x14
-  dw 0x0140                                 ; SizeOfOptionalHeader
+  dw 0x0158                                 ; SizeOfOptionalHeader
   dw 0xD8DE                                 ; Characteristics
 
 ASSERTEQ $-exefile,0x1C
@@ -145,7 +142,7 @@ unpacked_entry:
     mov eax,[eax+0x20]        ; AddressOfNames(offset)
     add eax,ebx               ; AddressOfNames(address)
     mov esi,[eax+4*ecx]       ; Names[namenumber](offset)
-    inc eax                   ; header constrained
+    pop eax                   ; header constrained, undoes constrained push es
     add esi,ebx               ; Names[namenumber](address)
     fmul dword[ebx]           ; header constrained
     add edx,ebx               ; Functions[ordinal](address)

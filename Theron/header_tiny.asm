@@ -6,8 +6,15 @@
 ; Heavily borrowing techniques from Crinkler,
 ;   https://github.com/runestubbe/Crinkler
 ;
-; Given N imports and M libraries, the importer pushes O(N*M) items to stack
-; which are never cleaned up.  This is not anticipated to cause overflow.
+; SizeOfOptionalHeader has two possibilities:
+;   0x0158  pop eax / add...  Requires minimum file size 0x0158+0x1C = 372
+;     Importer frees its own usage of the stack.
+;   0x0140  inc eax / add...  Requires minimum file size 0x0140+0x1C = 348
+;     Given N imports and M exports per imported library,
+;     the importer pushes O(N*M) items to the stack which are never popped.
+;     This is not anticipated to cause overflow for the tiny number of imports
+;     in any 348-371 bytes small executable.
+;     (20KB stack consumed for the 15 imports of HelloWindows)
 ;
 ; Sizes: header+importer+LoadLibraryA hash
 ; 2023-01-27  160  Theron Tarigo
@@ -52,7 +59,7 @@ execpart0:
     mov esi,[eax+4*ecx]       ; 033488  [1:3] NumberOfSymbols
 
 ASSERTEQ $-pehdr,0x14
-  dw 0x0140   ; inc eax / add...              SizeOfOptionalHeader
+  dw 0x0158   ; pop eax / add...              SizeOfOptionalHeader
   dw 0xD8DE   ; esi,ebx / fmul...             Characteristics
 
 ASSERTEQ $-exefile,0x1C
