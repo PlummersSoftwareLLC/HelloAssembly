@@ -16,6 +16,8 @@
 ; 2023-01-30  388  (-3 from header_tiny)
 ;             386
 ;             (-5+3) No more padding in library names, importer now scans
+;             385
+;             (-1)   cdq for zero args in msg loop
 ;
 ;-----------------------
 
@@ -79,12 +81,12 @@
     sub esp,0x20 ; allocate 0x20 for MSG
 
   msgloop:
-    mov edx,esp ; msg
-    xor eax,eax
-    push eax                  ; wMsgFilterMax
-    push eax                  ; wMsgFilterMin
-    push eax                  ; hWnd
-    push edx                  ; lpMsg
+    mov eax,esp ; msg
+    cdq
+    push edx                  ; wMsgFilterMax
+    push edx                  ; wMsgFilterMin
+    push edx                  ; hWnd
+    push eax                  ; lpMsg
     CALLIMPORT GetMessageA
     test eax,eax ; return value 0 means WM_QUIT
     jnz noquit
