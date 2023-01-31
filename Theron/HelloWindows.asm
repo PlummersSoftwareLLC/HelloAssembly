@@ -14,10 +14,12 @@
 ; 2023-01-29  391  Theron Tarigo
 ;             (-2)   Use wndproc arg for hWnd
 ; 2023-01-30  388  (-3 from header_tiny)
-;             386
+;             386  Theron Tarigo
 ;             (-5+3) No more padding in library names, importer now scans
 ;             385
 ;             (-1)   cdq for zero args in msg loop
+;             383
+;             (-2)   Use bss instead of stack for msg struct
 ;
 ;-----------------------
 
@@ -78,15 +80,13 @@
 
     CALLIMPORT UpdateWindow
 
-    sub esp,0x20 ; allocate 0x20 for MSG
-
   msgloop:
-    mov eax,esp ; msg
+    lea ebx,REFREL(msg)
     cdq
     push edx                  ; wMsgFilterMax
     push edx                  ; wMsgFilterMin
     push edx                  ; hWnd
-    push eax                  ; lpMsg
+    push ebx                  ; lpMsg
     CALLIMPORT GetMessageA
     test eax,eax ; return value 0 means WM_QUIT
     jnz noquit
@@ -97,7 +97,7 @@
 
     ; TranslateMessage's effects aren't used in the simple app.
 
-    push esp                  ; lpMsg
+    push ebx                  ; lpMsg
     CALLIMPORT DispatchMessageA
 
     jmp msgloop
@@ -219,4 +219,5 @@ db "gdi32"
 section bss nobits vfollows=bin
 
 rect: resd 4
+msg: resd 8
 
