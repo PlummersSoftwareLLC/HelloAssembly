@@ -21,6 +21,8 @@
 ;                    First publication
 ; 2023-01-29  157  (from suggestion by qkumba)
 ;             (-3)   add edi,4*n -> times n scasd
+; 2023-01-30  154  Theron Tarigo
+;             (-3)   Test for zero hash as import table end condition
 ;
 ;-----------------------
 
@@ -146,8 +148,9 @@ execpartB:
     mov ebx,eax
     times 2 scasd
     nonextlib:
-    cmp di,importtable_end-IMGBASE
-    jnz importloop
+    ; eax=0 unless a module was just loaded
+    cmp eax,[edi] ; if next hash is zero (or by bad luck, coincides module)
+    jne importloop
 
     ; END OF HASH LOADER
     ; eax = 0

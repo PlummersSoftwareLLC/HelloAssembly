@@ -195,8 +195,8 @@ execpartB:
     mov ebx,eax
     times 2 scasd
     nonextlib:
-    cmp di,importtable_end-IMGBASE
-    jnz importloop
+    cmp eax,[edi]
+    jne importloop
 
     ; END OF HASH LOADER
     ; eax = 0

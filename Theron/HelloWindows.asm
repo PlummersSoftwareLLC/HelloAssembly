@@ -9,10 +9,11 @@
 ;
 ; 2023-01-27  396  Theron Tarigo
 ;                    First publication
-; 2023-01-29  393  header_tiny 2023-01-29 819efd
+; 2023-01-29  393  (-3 from header_tiny)
 ;                    Remove alignment
 ; 2023-01-29  391  Theron Tarigo
 ;             (-2)   Use wndproc arg for hWnd
+; 2023-01-30  388  (-3 from header_tiny)
 ;
 ;-----------------------
 
@@ -172,6 +173,7 @@ relrefstart: ; 256b from here onwards are [ebp+byte] addressable
 AppName: db "Dave's Tiny App",0
 
 ; Import table rules
+;   Table must be followed by end of file, or by 4 null bytes.
 ;   Library name must occupy 8 bytes, zero-padded as needed.
 ;   Each library name must be followed by at least one hash.
 ;     (remember this when debugging)
@@ -212,8 +214,6 @@ db "user32",0,0
 db "gdi32",0,0,0
   pfnSetBkMode:
     dd 0xE1789D00
-
-importtable_end:
 
 section bss nobits vfollows=bin
 

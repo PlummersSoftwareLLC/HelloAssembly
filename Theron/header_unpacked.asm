@@ -166,8 +166,9 @@ unpacked_entry:
     mov ebx,eax               ; found -> start importing from this module
     times 2 scasd             ; go to first hash (edi+=8)
     nonextlib:
-    cmp di,importtable_end-IMGBASE; RVA(importtable_end)<0xFFFF, saves 1 byte
-    jnz importloop            ; more hashes to import
+    ; eax=0 unless a module was just loaded
+    cmp eax,[edi] ; if next hash is zero (or by bad luck, coincides module)
+    jne importloop            ; more hashes to import
 
     ; END OF HASH LOADER
     ; eax = 0
