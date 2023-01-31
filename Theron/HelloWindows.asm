@@ -96,8 +96,7 @@
   noquit:
 
     ; TranslateMessage's effects aren't used in the simple app.
-    ; push esp                  ; lpMsg
-    ; CALLIMPORT TranslateMessage
+
     push esp                  ; lpMsg
     CALLIMPORT DispatchMessageA
 
@@ -198,8 +197,6 @@ db "user32"
     dd 0x03687B00
   pfnGetMessageA:
     dd 0x83311D00
-; pfnTranslateMessage:
-;   dd 0xEA661C00
   pfnDispatchMessageA:
     dd 0x2EFBB200
   pfnDefWindowProcA:
