@@ -5,10 +5,7 @@
 ; Heavily borrowing techniques from Crinkler,
 ;   https://github.com/runestubbe/Crinkler
 ;
-; Given N imports and M libraries, the importer pushes O(N*M) items to stack
-; which are never cleaned up.  This is not anticipated to cause overflow.
-;
-; 2023-01-27  Theron Tarigo
+; See header_tiny.asm for history.
 ;
 ;-----------------------
 
@@ -41,7 +38,7 @@ pehdr:
   dd 0x90909090                             ; NumberOfSymbols
 
 ASSERTEQ $-pehdr,0x14
-  dw 0x0140                                 ; SizeOfOptionalHeader
+  dw 0x0158                                 ; SizeOfOptionalHeader
   dw 0xD8DE                                 ; Characteristics
 
 ASSERTEQ $-exefile,0x1C
@@ -171,10 +168,10 @@ execpart0:
     add eax,ebx               ; 01D8    [3/0]     ///
     mov esi,[eax+4*ecx]       ; 033488  [1:3] NumberOfSymbols
 ;pehdr+0x14:
-    inc eax                   ; 40      [0  ] SizeOfOptionalHeader
-    add esi,ebx               ; 01DE    [1/0] Characteristics ///
-    fmul dword[ebx]           ; D80B    [1/0] Magic ///
-    add edx,ebx               ; 01DA    [1/0] MajorLinkerVersion
+    pop eax                   ; 58      [0  ] SizeOfOptionalHeader
+    add esi,ebx               ; 01DE    [1/0]  /// Characteristics
+    fmul dword[ebx]           ; D80B    [1/0]  /// Magic
+    add edx,ebx               ; 01DA    [1/0]  /// MajorLinkerVersion
 
 execpart1:
     xor eax,eax               ; 31C0    [0/0] MinorLinkerVersion ///
@@ -190,15 +187,17 @@ execpartB:
     cmp eax,[edi]
     jne searchloop
     mov [edi],edx
-    add edi,4
+    scasd
     push edi
     CALLIMPORT LoadLibraryA
     test eax,eax
     jz nonextlib
     mov ebx,eax
-    add edi,8
+    mov cl,0xFF
+    repne scasb
+    dec edi
     nonextlib:
-    cmp di,importtable_end-IMGBASE
+    or eax,[edi]
     jnz importloop
 
     ; END OF HASH LOADER

@@ -5,10 +5,7 @@
 ; Heavily borrowing techniques from Crinkler,
 ;   https://github.com/runestubbe/Crinkler
 ;
-; Given N imports and M libraries, the importer pushes O(N*M) items to stack
-; which are never cleaned up.  This is not anticipated to cause overflow.
-;
-; 2023-01-27  Theron Tarigo
+; See header_tiny.asm for history.
 ;
 ;-----------------------
 
@@ -41,7 +38,7 @@ pehdr:
   dd 0x90909090                             ; NumberOfSymbols
 
 ASSERTEQ $-pehdr,0x14
-  dw 0x0140                                 ; SizeOfOptionalHeader
+  dw 0x0158                                 ; SizeOfOptionalHeader
   dw 0xD8DE                                 ; Characteristics
 
 ASSERTEQ $-exefile,0x1C
@@ -145,7 +142,7 @@ unpacked_entry:
     mov eax,[eax+0x20]        ; AddressOfNames(offset)
     add eax,ebx               ; AddressOfNames(address)
     mov esi,[eax+4*ecx]       ; Names[namenumber](offset)
-    inc eax                   ; header constrained
+    pop eax                   ; header constrained, undoes constrained push es
     add esi,ebx               ; Names[namenumber](address)
     fmul dword[ebx]           ; header constrained
     add edx,ebx               ; Functions[ordinal](address)
@@ -161,16 +158,20 @@ unpacked_entry:
     cmp eax,[edi]             ; compare to hash in importtable
     jne searchloop            ; try again
     mov [edi],edx             ; replace hash with resolved address
-    add edi,4                 ; next import
+    scasd                     ; next import (edi+=4)
     push edi                  ; try the next table entry as a library name
     CALLIMPORT LoadLibraryA
     test eax,eax
     jz nonextlib              ; not found => it wasn't a library name at all
     mov ebx,eax               ; found -> start importing from this module
-    add edi,8                 ; go to first hash
+    ; module will be page aligned, thus al=0
+    mov cl,0xFF
+    repne scasb               ; scan past end of library name
+    dec edi                   ; move to null byte (first byte of hash)
     nonextlib:
-    cmp di,importtable_end-IMGBASE; RVA(importtable_end)<0xFFFF, saves 1 byte
-    jnz importloop            ; more hashes to import
+    ; eax=0 unless a module was just loaded
+    or eax,[edi]              ; not done if next hash (or module) is nonzero
+    jnz importloop
 
     ; END OF HASH LOADER
     ; eax = 0

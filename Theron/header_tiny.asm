@@ -1,14 +1,30 @@
 ;-----------------------
-; header_unpacked.asm
-; Version of header_tiny.asm without using program code in the header fields;
+; header_tiny.asm
 ; Hand-written PE32 format headers and hash-based function import;
+; Program code is packed into sections of headers which are found to be unused
+; according to various published materials.
 ; Heavily borrowing techniques from Crinkler,
 ;   https://github.com/runestubbe/Crinkler
 ;
-; Given N imports and M libraries, the importer pushes O(N*M) items to stack
-; which are never cleaned up.  This is not anticipated to cause overflow.
+; SizeOfOptionalHeader has two possibilities:
+;   0x0158  pop eax / add...  Requires minimum file size 0x0158+0x1C = 372
+;     Importer frees its own usage of the stack.
+;   0x0140  inc eax / add...  Requires minimum file size 0x0140+0x1C = 348
+;     Given N imports and M exports per imported library,
+;     the importer pushes O(N*M) items to the stack which are never popped.
+;     This is not anticipated to cause overflow for the tiny number of imports
+;     in any 348-371 bytes small executable.
+;     (20KB stack consumed for the 15 imports of HelloWindows)
 ;
-; 2023-01-27  Theron Tarigo   160 bytes header+importer+LoadLibraryA hash
+; Sizes: header+importer+LoadLibraryA hash
+; 2023-01-27  160  Theron Tarigo
+;                    First publication
+; 2023-01-29  157  (from suggestion by qkumba)
+;             (-3)   add edi,4*n -> times n scasd
+; 2023-01-30  154  Theron Tarigo
+;             (-3)   Test for zero hash as import table end condition
+;             157
+;             (+3)   Scan library name string lengths, no more fixed sizes
 ;
 ;-----------------------
 
@@ -47,7 +63,7 @@ execpart0:
     mov esi,[eax+4*ecx]       ; 033488  [1:3] NumberOfSymbols
 
 ASSERTEQ $-pehdr,0x14
-  dw 0x0140   ; inc eax / add...              SizeOfOptionalHeader
+  dw 0x0158   ; pop eax / add...              SizeOfOptionalHeader
   dw 0xD8DE   ; esi,ebx / fmul...             Characteristics
 
 ASSERTEQ $-exefile,0x1C
@@ -126,15 +142,19 @@ execpartB:
     cmp eax,[edi]
     jne searchloop
     mov [edi],edx
-    add edi,4
+    scasd
     push edi
     CALLIMPORT LoadLibraryA
     test eax,eax
     jz nonextlib
     mov ebx,eax
-    add edi,8
+    ; module will be page aligned, thus al=0
+    mov cl,0xFF
+    repne scasb
+    dec edi
     nonextlib:
-    cmp di,importtable_end-IMGBASE
+    ; eax=0 unless a module was just loaded
+    or eax,[edi]
     jnz importloop
 
     ; END OF HASH LOADER

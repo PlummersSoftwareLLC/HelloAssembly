@@ -7,7 +7,19 @@
 ;   yasm -fbin -o HelloWindows.exe HelloWindows.asm
 ;   yasm -fbin -o HelloCompat.exe HelloWindows.asm -DWINECOMPAT
 ;
-; 2023-01-27  Theron Tarigo   396 bytes with header_tiny v2023-01-27
+; 2023-01-27  396  Theron Tarigo
+;                    First publication
+; 2023-01-29  393  (-3 from header_tiny)
+;                    Remove alignment
+; 2023-01-29  391  Theron Tarigo
+;             (-2)   Use wndproc arg for hWnd
+; 2023-01-30  388  (-3 from header_tiny)
+;             386  Theron Tarigo
+;             (-5+3) No more padding in library names, importer now scans
+;             385
+;             (-1)   cdq for zero args in msg loop
+;             383
+;             (-2)   Use bss instead of stack for msg struct
 ;
 ;-----------------------
 
@@ -53,8 +65,6 @@
 
     CALLIMPORT CreateWindowExA
 
-    mov REFREL(hwnd),eax
-
     ; ARGS OF  UpdateWindow
     push eax                  ; hWnd
     ; END ARGS UpdateWindow
@@ -70,15 +80,13 @@
 
     CALLIMPORT UpdateWindow
 
-    sub esp,0x20 ; allocate 0x20 for MSG
-
   msgloop:
-    mov edx,esp ; msg
-    xor eax,eax
-    push eax                  ; wMsgFilterMax
-    push eax                  ; wMsgFilterMin
-    push eax                  ; hWnd
-    push edx                  ; lpMsg
+    lea ebx,REFREL(msg)
+    cdq
+    push edx                  ; wMsgFilterMax
+    push edx                  ; wMsgFilterMin
+    push edx                  ; hWnd
+    push ebx                  ; lpMsg
     CALLIMPORT GetMessageA
     test eax,eax ; return value 0 means WM_QUIT
     jnz noquit
@@ -88,9 +96,8 @@
   noquit:
 
     ; TranslateMessage's effects aren't used in the simple app.
-    ; push esp                  ; lpMsg
-    ; CALLIMPORT TranslateMessage
-    push esp                  ; lpMsg
+
+    push ebx                  ; lpMsg
     CALLIMPORT DispatchMessageA
 
     jmp msgloop
@@ -101,7 +108,7 @@ relrefstart: ; 256b from here onwards are [ebp+byte] addressable
     mov eax,regrelref
     pushad ; regrelref restored to eax upon popad
     mov ebp,eax
-    mov eax,[esp+0x28]
+    mov eax,[esp+0x28] ; uMsg
     cmp eax,0x000F ; WM_PAINT
     ; Handles also WM_SIZE.
     ; Everything below 0x000F is also reasonable time to paint.
@@ -109,7 +116,7 @@ relrefstart: ; 256b from here onwards are [ebp+byte] addressable
     cmp al,0x02 ; 0x0002 = WM_DESTROY
     je quit
 
-    mov ebx,REFREL(hwnd)
+    mov ebx,[esp+0x24] ; hWnd
     lea esi,REFREL(rect)
 
     ; ARGS OF  GetDC
@@ -168,10 +175,9 @@ relrefstart: ; 256b from here onwards are [ebp+byte] addressable
 
 AppName: db "Dave's Tiny App",0
 
-  align 4,db 0
-
 ; Import table rules
-;   Library name must occupy 8 bytes, zero-padded as needed.
+;   Table must be followed by end of file, or by 4 null bytes.
+;   Library name must not be padded, and may be any length.
 ;   Each library name must be followed by at least one hash.
 ;     (remember this when debugging)
 
@@ -182,7 +188,7 @@ importtable:
   pfnExitProcess:
     dd 0x32955300
 
-db "user32",0,0
+db "user32"
   pfnCreateWindowExA:
     dd 0xF9C6B200
   pfnSetWindowLongA:
@@ -191,8 +197,6 @@ db "user32",0,0
     dd 0x03687B00
   pfnGetMessageA:
     dd 0x83311D00
-; pfnTranslateMessage:
-;   dd 0xEA661C00
   pfnDispatchMessageA:
     dd 0x2EFBB200
   pfnDefWindowProcA:
@@ -208,16 +212,12 @@ db "user32",0,0
   pfnDrawTextA:
     dd 0xA18D6B00
 
-db "gdi32",0,0,0
+db "gdi32"
   pfnSetBkMode:
     dd 0xE1789D00
 
-importtable_end:
-
-SIZEOFIMAGE equ $-exefile
-
 section bss nobits vfollows=bin
 
-hwnd: resd 1
 rect: resd 4
+msg: resd 8
 

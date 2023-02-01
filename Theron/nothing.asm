@@ -9,5 +9,3 @@ relrefstart:
 importtable:
   pfnLoadLibraryA:
     dd 0x71761F00
-importtable_end:
-SIZEOFIMAGE equ $-exefile
