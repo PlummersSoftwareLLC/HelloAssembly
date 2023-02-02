@@ -57,7 +57,7 @@ MainEntry proc NEAR
 	LOCAL	hwnd:HWND
 
 	push	NULL			        	; Get the instance handle of our app (NULL means ourselves)
-	call 	[ _imp__GetModuleHandleA@4 ]	; GetModuleHandle will return instance handle in EAX
+	call 	[ _imp__GetModuleHandleA@4 ] ; GetModuleHandle will return instance handle in EAX
 	mov	hInstance, eax		        	; Cache it in our global variable
 
 
@@ -88,7 +88,7 @@ MainEntry proc NEAR
 
 	lea	eax, wc
 	push	eax
-	call	[ _imp__RegisterClassExA@4 ]	; Register the window class 
+	call	[ _imp__RegisterClassExA@4 ] ; Register the window class 
 
 	push	NULL					; Bonus data, but we have none, so null
 	push	hInstance				; Our app instance handle
@@ -109,7 +109,6 @@ MainEntry proc NEAR
 
 	push	eax					; Force a paint of our window
 	call	[ _imp__UpdateWindow@4 ]
-
 MessageLoop:
 
 	push	0
@@ -117,7 +116,7 @@ MessageLoop:
 	push	NULL
 	lea	eax, msg
 	push	eax
-	call	[ _imp__GetMessageA@16 ]	; Get a message from the application's message queue
+	call	[ _imp__GetMessageA@16 ] ; Get a message from the application's message queue
 
 	test	eax, eax				; When GetMessage returns 0, it's time to exit
 	je	DoneMessages
@@ -168,12 +167,12 @@ NotWMDestroy:
 	lea	eax, ps					; WM_PAINT received
 	push	eax
 	push	hWnd
-	call	[ _imp__BeginPaint@8 ]				; Go get a device context to paint into
+	call	[ _imp__BeginPaint@8 ] ; Go get a device context to paint into
 	mov	hdc, eax
 
 	push	TRANSPARENT
 	push	hdc
-	call	[ _imp__SetBkMode@8 ]	; Make text have a transparent background
+	call	[ _imp__SetBkMode@8 ] ; Make text have a transparent background
 
 	lea	eax, rect				; Figure out how big the client area is so that we
 	push	eax					;   can center our content over it
@@ -186,12 +185,12 @@ NotWMDestroy:
 	push	-1
 	push	OFFSET AppName
 	push	hdc
-	call	[ _imp__DrawTextA@20 ]	; Draw text centered vertically and horizontally
+	call	[ _imp__DrawTextA@20 ] ; Draw text centered vertically and horizontally
 
 	lea	eax, ps
 	push	eax
 	push	hWnd
-	call	[ _imp__EndPaint@8 ]	; Wrap up painting
+	call	[ _imp__EndPaint@8 ] ; Wrap up painting
 
 	xor	eax, eax				; Return 0 as no further processing needed
 	ret
