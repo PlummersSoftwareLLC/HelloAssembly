@@ -5,7 +5,7 @@
 ; Compiler directives and includes
 
 .386						; Full 80386 instruction set and mode
-.model tiny, stdcall				; All 32-bit and later apps are flat. Used to include "tiny, etc"
+.model flat, stdcall				; All 32-bit and later apps are flat. Used to include "tiny, etc"
 option casemap:none				; Preserve the case of system identifiers but not our own, more or less
 
 
