@@ -5,7 +5,7 @@
 ; Compiler directives and includes
 
 .386						; Full 80386 instruction set and mode
-.model tiny, stdcall				; All 32-bit and later apps are flat. Used to include "tiny, etc"
+.model flat, stdcall				; All 32-bit and later apps are flat. Used to include "tiny, etc"
 option casemap:none				; Preserve the case of system identifiers but not our own, more or less
 
 
@@ -25,6 +25,22 @@ WindowHeight	equ 480
 
 .DATA
 
+EXTERN _imp__BeginPaint@8 :PTR ;;
+EXTERN _imp__CreateWindowExA@48 :PTR ;;
+EXTERN _imp__GetModuleHandleA@4 :PTR ;;
+EXTERN _imp__GetStartupInfoA@4 :PTR ;;
+EXTERN _imp__RegisterClassExA@4 :PTR ;;
+EXTERN _imp__UpdateWindow@4 :PTR ;;
+EXTERN _imp__GetMessageA@16 :PTR ;;
+EXTERN _imp__TranslateMessage@4 :PTR ;;
+EXTERN _imp__DispatchMessageW@4 :PTR ;;
+EXTERN _imp__PostQuitMessage@4 :PTR ;;
+EXTERN _imp__SetBkMode@8 :PTR ;;
+EXTERN _imp__GetClientRect@8 :PTR ;;
+EXTERN _imp__DrawTextA@20 :PTR ;;
+EXTERN _imp__EndPaint@8 :PTR ;;
+EXTERN _imp__DefWindowProcA@16 :PTR ;;
+
 ClassName label byte					; The name of our Window class (same as main window)
 AppName		db "Dave's Tiny App", 0		        ; The name of our main window
 
@@ -34,14 +50,14 @@ AppName		db "Dave's Tiny App", 0		        ; The name of our main window
 
 MainEntry proc NEAR
 
-        LOCAL   hInstance:HINSTANCE                     ; Was global in .DATA? before, now a local
+	LOCAL   hInstance:HINSTANCE                     ; Was global in .DATA? before, now a local
 	LOCAL	sui:STARTUPINFOA		        ; Reserve stack space so we can load and inspect the STARTUPINFO
 	LOCAL	wc:WNDCLASSEX			        ; Create these vars on the stack, hence LOCAL
 	LOCAL	msg:MSG
 	LOCAL	hwnd:HWND
 
 	push	NULL			        	; Get the instance handle of our app (NULL means ourselves)
-	call 	GetModuleHandle		        	; GetModuleHandle will return instance handle in EAX
+	call 	[ _imp__GetModuleHandleA@4 ] ; GetModuleHandle will return instance handle in EAX
 	mov	hInstance, eax		        	; Cache it in our global variable
 
 
@@ -49,7 +65,7 @@ MainEntry proc NEAR
 
 	lea	eax, sui			        ; Get the STARTUPINFO for this process
 	push	eax
-	call	GetStartupInfoA			        ; Find out if wShowWindow should be used
+	call	[ _imp__GetStartupInfoA@4 ]	; Find out if wShowWindow should be used
 	test	byte ptr sui.dwFlags, STARTF_USESHOWWINDOW
 	jnz	@1
 	mov	byte ptr sui.wShowWindow, SW_SHOWDEFAULT ; Use the default 
@@ -72,7 +88,7 @@ MainEntry proc NEAR
 
 	lea	eax, wc
 	push	eax
-	call	RegisterClassEx				; Register the window class 
+	call	[ _imp__RegisterClassExA@4 ] ; Register the window class 
 
 	push	NULL					; Bonus data, but we have none, so null
 	push	hInstance				; Our app instance handle
@@ -86,14 +102,13 @@ MainEntry proc NEAR
 	push	OFFSET AppName				; The window title (our application name)
 	push	OFFSET ClassName			; The window class name of what we're creating
 	push	0					; Extended style bits, if any
-	call 	CreateWindowExA
+	call 	[ _imp__CreateWindowExA@48 ]
 	test	eax, eax
 	je	MainRet				        ; Fail and bail on NULL handle returned
 	mov	hwnd, eax				; Window handle is the result, returned in eax
 
 	push	eax					; Force a paint of our window
-	call	UpdateWindow
-
+	call	[ _imp__UpdateWindow@4 ]
 MessageLoop:
 
 	push	0
@@ -101,18 +116,18 @@ MessageLoop:
 	push	NULL
 	lea	eax, msg
 	push	eax
-	call	GetMessage				; Get a message from the application's message queue
+	call	[ _imp__GetMessageA@16 ] ; Get a message from the application's message queue
 
 	test	eax, eax				; When GetMessage returns 0, it's time to exit
 	je	DoneMessages
 
 	lea	eax, msg				; Translate 'msg'
 	push	eax
-	call	TranslateMessage
+	call	[ _imp__TranslateMessage@4 ]
 
 	lea	eax, msg				; Dispatch 'msg'
 	push	eax
-	call	DispatchMessage
+	call	[ _imp__DispatchMessageW@4 ]
 
 	jmp	MessageLoop
 
@@ -140,7 +155,7 @@ WndProc proc hWnd:HWND, uMsg:UINT, wParam:WPARAM, lParam:LPARAM
 	jne	NotWMDestroy
 
 	push	0					; WM_DESTROY received, post our quit msg
-	call	PostQuitMessage				; Quit our application
+	call	[ _imp__PostQuitMessage@4 ]	; Quit our application
 	xor	eax, eax				; Return 0 to indicate we handled it
 	ret
 
@@ -152,17 +167,17 @@ NotWMDestroy:
 	lea	eax, ps					; WM_PAINT received
 	push	eax
 	push	hWnd
-	call	BeginPaint				; Go get a device context to paint into
+	call	[ _imp__BeginPaint@8 ] ; Go get a device context to paint into
 	mov	hdc, eax
 
 	push	TRANSPARENT
 	push	hdc
-	call	SetBkMode				; Make text have a transparent background
+	call	[ _imp__SetBkMode@8 ] ; Make text have a transparent background
 
 	lea	eax, rect				; Figure out how big the client area is so that we
 	push	eax					;   can center our content over it
 	push	hWnd
-	call	GetClientRect
+	call	[ _imp__GetClientRect@8 ]
 
 	push	DT_SINGLELINE + DT_CENTER + DT_VCENTER
 	lea	eax, rect
@@ -170,12 +185,12 @@ NotWMDestroy:
 	push	-1
 	push	OFFSET AppName
 	push	hdc
-	call	DrawText				; Draw text centered vertically and horizontally
+	call	[ _imp__DrawTextA@20 ] ; Draw text centered vertically and horizontally
 
 	lea	eax, ps
 	push	eax
 	push	hWnd
-	call	EndPaint				; Wrap up painting
+	call	[ _imp__EndPaint@8 ] ; Wrap up painting
 
 	xor	eax, eax				; Return 0 as no further processing needed
 	ret
@@ -186,7 +201,7 @@ NotWMPaint:
 	push	wParam
 	push	uMsg
 	push	hWnd
-	call	DefWindowProc				; Forward message on to default processing and
+	call	[ _imp__DefWindowProcA@16 ]	; Forward message on to default processing and
 	ret						;   return whatever it does
 
 WndProc endp
