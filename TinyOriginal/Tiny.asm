@@ -33,7 +33,7 @@ EXTERN _imp__RegisterClassExA@4 :PTR ;;
 EXTERN _imp__UpdateWindow@4 :PTR ;;
 EXTERN _imp__GetMessageA@16 :PTR ;;
 EXTERN _imp__TranslateMessage@4 :PTR ;;
-EXTERN _imp__DispatchMessageW@4 :PTR ;;
+EXTERN _imp__DispatchMessageA@4 :PTR ;;
 EXTERN _imp__PostQuitMessage@4 :PTR ;;
 EXTERN _imp__SetBkMode@8 :PTR ;;
 EXTERN _imp__GetClientRect@8 :PTR ;;
@@ -127,7 +127,7 @@ MessageLoop:
 
 	lea	eax, msg				; Dispatch 'msg'
 	push	eax
-	call	[ _imp__DispatchMessageW@4 ]
+	call	[ _imp__DispatchMessageA@4 ]
 
 	jmp	MessageLoop
 
