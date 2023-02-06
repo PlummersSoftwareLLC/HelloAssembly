@@ -89,7 +89,7 @@ The executable will be named HelloWindows.exe.
 
 ## Current sizes
 
-Current smallest known working executable sizes as of 02/02/2023 are as follows:
+Current smallest known working executable sizes as of 02/06/2023 are as follows:
 
 | Program | Linker | Size in bytes |
 |-|-|-:|
