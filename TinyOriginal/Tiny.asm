@@ -28,7 +28,6 @@ WindowHeight	equ 480
 EXTERN _imp__BeginPaint@8 :PTR ;;
 EXTERN _imp__CreateWindowExA@48 :PTR ;;
 EXTERN _imp__GetModuleHandleA@4 :PTR ;;
-EXTERN _imp__GetStartupInfoA@4 :PTR ;;
 EXTERN _imp__RegisterClassExA@4 :PTR ;;
 EXTERN _imp__UpdateWindow@4 :PTR ;;
 EXTERN _imp__GetMessageA@16 :PTR ;;
@@ -51,7 +50,6 @@ AppName		db "Dave's Tiny App", 0		        ; The name of our main window
 MainEntry proc NEAR
 
 	LOCAL   hInstance:HINSTANCE                     ; Was global in .DATA? before, now a local
-	LOCAL	sui:STARTUPINFOA		        ; Reserve stack space so we can load and inspect the STARTUPINFO
 	LOCAL	wc:WNDCLASSEX			        ; Create these vars on the stack, hence LOCAL
 	LOCAL	msg:MSG
 	LOCAL	hwnd:HWND
@@ -59,18 +57,6 @@ MainEntry proc NEAR
 	push	NULL			        	; Get the instance handle of our app (NULL means ourselves)
 	call 	[ _imp__GetModuleHandleA@4 ] ; GetModuleHandle will return instance handle in EAX
 	mov	hInstance, eax		        	; Cache it in our global variable
-
-
-	; Get the startup mode for the window from the STARTUPINFO
-
-	lea	eax, sui			        ; Get the STARTUPINFO for this process
-	push	eax
-	call	[ _imp__GetStartupInfoA@4 ]	; Find out if wShowWindow should be used
-	test	byte ptr sui.dwFlags, STARTF_USESHOWWINDOW
-	jnz	@1
-	mov	byte ptr sui.wShowWindow, SW_SHOWDEFAULT ; Use the default 
-@1:
-	push	sui.wShowWindow		      		; If the show window flag bit was nonzero, we use wShowWindow
 
 	mov	wc.cbSize, SIZEOF WNDCLASSEX		; Fill in the values in the members of our windowclass
 	mov	wc.style, CS_HREDRAW or CS_VREDRAW	; Redraw if resized in either dimension
