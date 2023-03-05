@@ -89,11 +89,11 @@ The executable will be named HelloWindows.exe.
 
 ## Current sizes
 
-Current smallest known working executable sizes as of 02/06/2023 are as follows:
+Current smallest known working executable sizes as of 03/05/2023 are as follows:
 
 | Program | Linker | Size in bytes |
 |-|-|-:|
 | `Lasse\LittleWindows.asm` | MASM32 | 1104 |
 | `Lasse\LittleWindows.asm` | Crinkler | 818 |
 | `Theron\HelloWindows.asm` | Yasm | 383 |
-| `TinyOriginal\Tiny.asm` | Crinkler | 572 |
+| `TinyOriginal\Tiny.asm` | Crinkler | 542 |
