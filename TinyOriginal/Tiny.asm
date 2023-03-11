@@ -58,19 +58,26 @@ MainEntry proc NEAR
 	call 	[ _imp__GetModuleHandleA@4 ] ; GetModuleHandle will return instance handle in EAX
 	mov	hInstance, eax		        	; Cache it in our global variable
 
+	; memset(&wc, 0, sizeof(wc))
+	push	12					; 0000000cH
+	pop	ecx
+	xor	eax, eax
+	lea	edi, wc
+	rep stosd
+
 	mov	wc.cbSize, SIZEOF WNDCLASSEX		; Fill in the values in the members of our windowclass
 	mov	wc.style, CS_HREDRAW or CS_VREDRAW	; Redraw if resized in either dimension
 	mov	wc.lpfnWndProc, OFFSET WndProc		; Our callback function to handle window messages
-	mov	wc.cbClsExtra, 0			; No extra class data
-	mov	wc.cbWndExtra, 0			; No exttra window data
+;	mov	wc.cbClsExtra, 0			; No extra class data
+;	mov	wc.cbWndExtra, 0			; No exttra window data
 	mov	eax, hInstance
 	mov	wc.hInstance, eax			; Our instance handle
 	mov	wc.hbrBackground, COLOR_3DSHADOW+1	; Default brush colors are color plus one
-	mov	wc.lpszMenuName, NULL			; No app menu
+;	mov	wc.lpszMenuName, NULL			; No app menu
 	mov	wc.lpszClassName, OFFSET ClassName	; The window's class name
-
-	mov	wc.hIcon, NULL                          ; System default icon
-	mov	wc.hCursor, NULL                        ; System default cursor
+;	mov	wc.hIcon, NULL                          ; System default icon
+;	mov	wc.hIconSm, NULL                          ; System default icon
+;	mov	wc.hCursor, NULL                        ; System default cursor
 
 	lea	eax, wc
 	push	eax
